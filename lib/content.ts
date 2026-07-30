@@ -45,7 +45,7 @@ export type Award = {
 };
 
 export type SiteContent = {
-  designVersion: 5;
+  designVersion: 6;
   name: string;
   greeting: string;
   bio: string;
@@ -71,15 +71,15 @@ export type SiteContent = {
 };
 
 export const defaultContent: SiteContent = {
-  designVersion: 5,
+  designVersion: 6,
   name: "Dylan",
   greeting: "hi there!",
-  bio: "i'm dylan, a student at uc berkeley studying ds + applied math. currently into hiking, videography, scriabin, and ml. here are some fun facts!",
+  bio: "i'm dylan, a student at uc berkeley studying ds + applied math. currently into fish, videography, scriabin, and ml. here are some fun facts!",
   facts: [
     "once performed violin for the U.S. Secret Service",
     "top 0.1% fastest typists worldwide",
     "hit 7.5 mil impressions on my first yt video",
-    "ex-#1 nationwide cryptoquote solver",
+    "ex-#1 nationwide aristocrat solver",
     "learning some photography on my nikon d610",
   ],
   defaultTab: "experience",
@@ -136,12 +136,13 @@ export function sanitizeContent(value: unknown): SiteContent {
     candidate.designVersion !== 2 &&
     candidate.designVersion !== 3 &&
     candidate.designVersion !== 4 &&
-    candidate.designVersion !== 5
+    candidate.designVersion !== 5 &&
+    candidate.designVersion !== 6
   ) {
     return defaultContent;
   }
   const isVersionTwo = candidate.designVersion === 2;
-  const needsProfileUpdate = candidate.designVersion < 5;
+  const needsProfileUpdate = candidate.designVersion < 6;
 
   const socials = needsProfileUpdate
     ? defaultContent.socials
@@ -208,7 +209,7 @@ export function sanitizeContent(value: unknown): SiteContent {
     : defaultContent.defaultTab;
 
   return {
-    designVersion: 5,
+    designVersion: 6,
     name: cleanString(candidate.name, defaultContent.name),
     greeting: cleanString(candidate.greeting, defaultContent.greeting),
     bio: needsProfileUpdate

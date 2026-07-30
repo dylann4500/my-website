@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
 import {
   tabIds,
   type SiteContent,
@@ -40,6 +46,25 @@ const socialFallbacks: Record<string, string> = {
 };
 
 const emailFallback = "nguyennalyd3@gmail.com";
+
+function linkedPhrase(
+  text: string,
+  phrase: string,
+  href: string,
+): ReactNode {
+  const start = text.indexOf(phrase);
+  if (start === -1) return text;
+
+  return (
+    <>
+      {text.slice(0, start)}
+      <a className="inline-link" href={href} target="_blank" rel="noreferrer">
+        {phrase}
+      </a>
+      {text.slice(start + phrase.length)}
+    </>
+  );
+}
 
 export function PortfolioFrame({
   active,
@@ -105,10 +130,30 @@ export function PortfolioFrame({
         <section className="intro-column">
           <div>
             <h1>{content.greeting}</h1>
-            <p className="bio-copy">{content.bio}</p>
+            <p className="bio-copy">
+              {linkedPhrase(
+                content.bio,
+                "fish",
+                "https://en.wikipedia.org/wiki/Literature_(card_game)",
+              )}
+            </p>
             <ul className="fact-list">
               {content.facts.map((fact, index) => (
-                <li key={`${fact}-${index}`}>{fact}</li>
+                <li key={`${fact}-${index}`}>
+                  {fact.includes("typists")
+                    ? linkedPhrase(
+                        fact,
+                        "typists",
+                        "https://monkeytype.com/profile/dylann4500",
+                      )
+                    : fact.includes("aristocrat")
+                      ? linkedPhrase(
+                          fact,
+                          "aristocrat",
+                          "https://en.wikipedia.org/wiki/Aristocrat_Cipher",
+                        )
+                      : fact}
+                </li>
               ))}
             </ul>
           </div>

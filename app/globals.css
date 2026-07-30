@@ -46,6 +46,17 @@ a {
   text-decoration: none;
 }
 
+.inline-link {
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+.inline-link:hover {
+  text-decoration-color: currentColor;
+}
+
 button,
 input,
 textarea,

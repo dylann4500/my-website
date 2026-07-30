@@ -50,7 +50,7 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
     if (!draft) return;
     try {
       const parsed = JSON.parse(draft) as Partial<SiteContent>;
-      if (parsed.designVersion !== 5) {
+      if (parsed.designVersion !== 6) {
         window.localStorage.removeItem("portfolio-editor-draft");
         return;
       }
