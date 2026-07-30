@@ -32,8 +32,14 @@ const newItems: Record<
 > = {
   socials: { label: "New link", url: "" },
   projects: { title: "New project", year: "", description: "", url: "" },
-  photos: { title: "Untitled", caption: "", url: "" },
-  videos: { title: "New video", year: "", url: "" },
+  photos: {
+    title: "Untitled",
+    date: "",
+    description: "",
+    caption: "",
+    url: "",
+  },
+  videos: { title: "New video", year: "", description: "", url: "" },
   experience: {
     title: "Role",
     organization: "Organization",
@@ -55,7 +61,7 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
     if (!draft) return;
     try {
       const parsed = JSON.parse(draft) as Partial<SiteContent>;
-      if (parsed.designVersion !== 8) {
+      if (parsed.designVersion !== 9) {
         window.localStorage.removeItem("portfolio-editor-draft");
         return;
       }
@@ -195,25 +201,64 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
     }
   }
 
+  async function uploadImage(file: File) {
+    const body = new FormData();
+    body.append("file", file);
+    const response = await fetch("/api/media", { method: "POST", body });
+    const result = (await response.json()) as { url?: string; error?: string };
+    if (!response.ok || !result.url) {
+      throw new Error(result.error || "Upload failed");
+    }
+    return result.url;
+  }
+
   async function uploadPhoto(index: number, event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
     setUploading(`photo-${index}`);
     setState("Uploading image…");
     try {
-      const body = new FormData();
-      body.append("file", file);
-      const response = await fetch("/api/media", { method: "POST", body });
-      const result = (await response.json()) as { url?: string; error?: string };
-      if (!response.ok || !result.url) {
-        throw new Error(result.error || "Upload failed");
-      }
-      updateItem("photos", index, "url", result.url);
+      const url = await uploadImage(file);
+      updateItem("photos", index, "url", url);
       setState("Image uploaded — publish to make it live");
     } catch (error) {
       setState(error instanceof Error ? error.message : "Upload failed");
     } finally {
       setUploading("");
+      event.target.value = "";
+    }
+  }
+
+  async function uploadPhotoBatch(event: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
+    setUploading("photo-batch");
+    setState(`Uploading ${files.length} photos…`);
+    try {
+      const uploaded = [];
+      for (const file of files) {
+        const url = await uploadImage(file);
+        uploaded.push({
+          title: file.name
+            .replace(/\.[^.]+$/, "")
+            .replace(/[-_]+/g, " "),
+          date: "",
+          description: "",
+          caption: "",
+          url,
+        });
+      }
+      setContent((current) => ({
+        ...current,
+        photos: [...current.photos, ...uploaded],
+      }));
+      markChanged();
+      setState(`${uploaded.length} photos uploaded — add details, then publish`);
+    } catch (error) {
+      setState(error instanceof Error ? error.message : "Upload failed");
+    } finally {
+      setUploading("");
+      event.target.value = "";
     }
   }
 
@@ -402,11 +447,37 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
                     updateItem("videos", index, "url", value)
                   }
                 />
+                <TextArea
+                  label="idea / creation notes"
+                  value={item.description}
+                  onChange={(value) =>
+                    updateItem("videos", index, "description", value)
+                  }
+                  linkHint
+                />
               </RepeatCard>
             ))}
           </RepeatSection>
 
           <RepeatSection title="gallery" onAdd={() => addItem("photos")}>
+            <div className="gallery-batch-row">
+              <p className="section-note">
+                Upload several photos at once, then add a title, date, and
+                description to each.
+              </p>
+              <label className="file-label">
+                {uploading === "photo-batch"
+                  ? "uploading…"
+                  : "upload multiple photos"}
+                <input
+                  type="file"
+                  multiple
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  onChange={uploadPhotoBatch}
+                  disabled={Boolean(uploading)}
+                />
+              </label>
+            </div>
             {content.photos.map((item, index) => (
               <RepeatCard
                 key={`photo-${index}`}
@@ -421,13 +492,21 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
                     }
                   />
                   <TextField
-                    label="caption"
-                    value={item.caption}
+                    label="date"
+                    value={item.date}
                     onChange={(value) =>
-                      updateItem("photos", index, "caption", value)
+                      updateItem("photos", index, "date", value)
                     }
                   />
                 </div>
+                <TextArea
+                  label="description"
+                  value={item.description}
+                  onChange={(value) =>
+                    updateItem("photos", index, "description", value)
+                  }
+                  linkHint
+                />
                 <TextField
                   label="image url"
                   value={item.url}

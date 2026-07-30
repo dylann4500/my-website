@@ -22,6 +22,8 @@ export type Project = {
 
 export type Photo = {
   title: string;
+  date: string;
+  description: string;
   caption: string;
   url: string;
 };
@@ -29,6 +31,7 @@ export type Photo = {
 export type Video = {
   title: string;
   year: string;
+  description: string;
   url: string;
 };
 
@@ -47,7 +50,7 @@ export type Award = {
 };
 
 export type SiteContent = {
-  designVersion: 8;
+  designVersion: 9;
   name: string;
   greeting: string;
   bio: string;
@@ -73,7 +76,7 @@ export type SiteContent = {
 };
 
 export const defaultContent: SiteContent = {
-  designVersion: 8,
+  designVersion: 9,
   name: "Dylan",
   greeting: "hi there!",
   bio: "i'm dylan, a student at uc berkeley studying ds + applied math. currently into [fish](https://en.wikipedia.org/wiki/Literature_(card_game)), videography, scriabin, and ml. here are some fun facts!",
@@ -289,7 +292,8 @@ export function sanitizeContent(value: unknown): SiteContent {
     candidate.designVersion !== 5 &&
     candidate.designVersion !== 6 &&
     candidate.designVersion !== 7 &&
-    candidate.designVersion !== 8
+    candidate.designVersion !== 8 &&
+    candidate.designVersion !== 9
   ) {
     return defaultContent;
   }
@@ -319,6 +323,8 @@ export function sanitizeContent(value: unknown): SiteContent {
   const photos = Array.isArray(candidate.photos)
     ? candidate.photos.slice(0, 60).map((item) => ({
         title: cleanString(item?.title),
+        date: cleanString(item?.date),
+        description: cleanString(item?.description, cleanString(item?.caption)),
         caption: cleanString(item?.caption),
         url: cleanUrl(item?.url),
       }))
@@ -328,6 +334,7 @@ export function sanitizeContent(value: unknown): SiteContent {
     ? candidate.videos.slice(0, 30).map((item) => ({
         title: cleanString(item?.title),
         year: cleanString(item?.year),
+        description: cleanString(item?.description),
         url: cleanUrl(item?.url),
       }))
     : [];
@@ -365,7 +372,7 @@ export function sanitizeContent(value: unknown): SiteContent {
     : defaultContent.defaultTab;
 
   return {
-    designVersion: 8,
+    designVersion: 9,
     name: cleanString(candidate.name, defaultContent.name),
     greeting: cleanString(candidate.greeting, defaultContent.greeting),
     bio: needsProfileUpdate || needsLinkSyntaxUpdate

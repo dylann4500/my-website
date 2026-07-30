@@ -9,6 +9,7 @@ import {
 import { RichText } from "@/components/RichText";
 import {
   tabIds,
+  type Photo,
   type SiteContent,
   type TabId,
 } from "@/lib/content";
@@ -46,6 +47,20 @@ const socialFallbacks: Record<string, string> = {
 };
 
 const emailFallback = "nguyennalyd3@gmail.com";
+
+function youtubeVideoId(value: string) {
+  try {
+    const url = new URL(value);
+    const host = url.hostname.replace(/^www\./, "");
+    if (host === "youtu.be") return url.pathname.split("/").filter(Boolean)[0] || "";
+    if (!["youtube.com", "m.youtube.com"].includes(host)) return "";
+    if (url.pathname === "/watch") return url.searchParams.get("v") || "";
+    const [section, id] = url.pathname.split("/").filter(Boolean);
+    return ["shorts", "embed", "live"].includes(section) ? id || "" : "";
+  } catch {
+    return "";
+  }
+}
 
 export function PortfolioFrame({
   active,
@@ -260,44 +275,49 @@ export function TabContent({
   if (tab === "videos") {
     if (!content.videos.length) return <EmptyState />;
     return (
-      <div className="link-list">
-        {content.videos.map((item, index) => (
-          <a
-            href={item.url || "#"}
-            target={item.url ? "_blank" : undefined}
-            rel={item.url ? "noreferrer" : undefined}
-            onClick={(event) => {
-              if (!item.url) event.preventDefault();
-            }}
-            key={`${item.title}-${index}`}
-          >
-            <span>{item.title}</span>
-            <span>{item.year || "↗"}</span>
-          </a>
-        ))}
+      <div className="video-list">
+        {content.videos.map((item, index) => {
+          const videoId = youtubeVideoId(item.url);
+          const thumbnail = videoId
+            ? `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`
+            : "";
+          return (
+            <article className="video-entry" key={`${item.title}-${index}`}>
+              <a
+                className="video-thumbnail"
+                href={item.url || "#"}
+                target={item.url ? "_blank" : undefined}
+                rel={item.url ? "noreferrer" : undefined}
+                onClick={(event) => {
+                  if (!item.url) event.preventDefault();
+                }}
+                aria-label={`Watch ${item.title}`}
+              >
+                {thumbnail ? (
+                  <img src={thumbnail} alt="" aria-hidden="true" />
+                ) : (
+                  <span>youtube url</span>
+                )}
+              </a>
+              <div className="video-copy">
+                <div className="entry-heading">
+                  <strong>{item.title}</strong>
+                  <span>{item.year}</span>
+                </div>
+                {item.description && (
+                  <p><RichText text={item.description} /></p>
+                )}
+              </div>
+            </article>
+          );
+        })}
       </div>
     );
   }
 
   if (tab === "gallery") {
     if (!content.photos.length) return <EmptyState />;
-    return (
-      <div className="mini-gallery">
-        {content.photos.map((photo, index) => (
-          <figure key={`${photo.title}-${index}`}>
-            {photo.url ? (
-              <img src={photo.url} alt={photo.title} />
-            ) : (
-              <div className="image-empty">{String(index + 1).padStart(2, "0")}</div>
-            )}
-            <figcaption>
-              <span>{photo.title}</span>
-              <span>{photo.caption}</span>
-            </figcaption>
-          </figure>
-        ))}
-      </div>
-    );
+    return <GalleryContent photos={content.photos} />;
   }
 
   if (!content.awards.length) return <EmptyState />;
@@ -335,4 +355,81 @@ export function TabContent({
 
 function EmptyState() {
   return <p className="empty-state">nothing here yet.</p>;
+}
+
+function GalleryContent({ photos }: { photos: Photo[] }) {
+  const [selected, setSelected] = useState<Photo | null>(null);
+
+  useEffect(() => {
+    if (!selected) return;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") setSelected(null);
+    };
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [selected]);
+
+  return (
+    <>
+      <div className="gallery-grid">
+        {photos.map((photo, index) => (
+          <button
+            className="gallery-item"
+            type="button"
+            onClick={() => setSelected(photo)}
+            key={`${photo.title}-${index}`}
+            aria-label={`Open ${photo.title || `photo ${index + 1}`}`}
+          >
+            {photo.url ? (
+              <img src={photo.url} alt={photo.title} />
+            ) : (
+              <span className="image-empty">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {selected && (
+        <div
+          className="gallery-lightbox"
+          role="dialog"
+          aria-modal="true"
+          aria-label={selected.title || "Photo details"}
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setSelected(null);
+          }}
+        >
+          <div className="gallery-lightbox-card">
+            <button
+              className="gallery-close"
+              type="button"
+              onClick={() => setSelected(null)}
+              aria-label="Close photo"
+            >
+              ×
+            </button>
+            {selected.url && (
+              <img src={selected.url} alt={selected.title} />
+            )}
+            <div className="gallery-meta">
+              <div className="entry-heading">
+                <strong>{selected.title}</strong>
+                <span>{selected.date}</span>
+              </div>
+              {selected.description && (
+                <p><RichText text={selected.description} /></p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
 }
