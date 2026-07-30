@@ -369,6 +369,7 @@ select:focus-visible,
 
 .video-thumbnail {
   display: grid;
+  position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
   place-items: center;
@@ -383,13 +384,7 @@ select:focus-visible,
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: grayscale(1);
-  transition: filter 140ms linear, opacity 140ms linear;
-}
-
-.video-thumbnail:hover img {
-  filter: grayscale(0);
-  opacity: 0.8;
+  filter: none;
 }
 
 .video-copy p {
@@ -406,6 +401,7 @@ select:focus-visible,
 
 .gallery-item {
   display: block;
+  position: relative;
   width: 100%;
   margin: 0 0 12px;
   padding: 4px;
@@ -419,13 +415,23 @@ select:focus-visible,
   display: block;
   width: 100%;
   height: auto;
-  filter: grayscale(0.85);
-  transition: filter 140ms linear, opacity 140ms linear;
+  filter: none;
 }
 
-.gallery-item:hover img {
-  filter: grayscale(0);
-  opacity: 0.82;
+.video-thumbnail::after,
+.gallery-item::after {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.1);
+  content: "";
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms linear;
+}
+
+.video-thumbnail:hover::after,
+.gallery-item:hover::after {
+  opacity: 1;
 }
 
 .image-empty {
