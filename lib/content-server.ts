@@ -31,9 +31,9 @@ export async function getPublishedContent(): Promise<SiteContent> {
       .where(eq(siteContent.id, 1))
       .limit(1);
 
-    if (!row) return defaultContent;
+    if (!row) return sanitizeContent(defaultContent);
     return sanitizeContent(JSON.parse(row.content));
   } catch {
-    return defaultContent;
+    return sanitizeContent(defaultContent);
   }
 }

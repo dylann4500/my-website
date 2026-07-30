@@ -492,9 +492,27 @@ select:focus-visible,
   font-size: 11px;
 }
 
+.editor-intro .editor-guide {
+  margin-top: -14px;
+  color: #333330;
+}
+
+.editor-guide code {
+  padding: 2px 4px;
+  background: #deded8;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 9px;
+}
+
 .editor-section {
   padding: 22px 0;
   border-top: 1px solid #d8d8d2;
+}
+
+.section-note {
+  margin: 0 0 10px;
+  color: #6c6c66;
+  font-size: 9px;
 }
 
 .editor-section-header {
@@ -538,6 +556,12 @@ select:focus-visible,
 .field textarea {
   min-height: 76px;
   resize: vertical;
+}
+
+.field-hint {
+  color: #7a7a74;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 8px;
 }
 
 .field-row {
@@ -685,8 +709,63 @@ select:focus-visible,
   gap: 6px;
 }
 
-.preview-tabs nav span {
+.preview-tabs nav button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #666660;
+  cursor: pointer;
   font-size: 8px;
+  text-align: left;
+}
+
+.preview-tabs nav button[aria-pressed="true"] {
+  color: #111;
+  font-weight: 600;
+}
+
+.preview-section-content {
+  min-width: 0;
+  max-height: 270px;
+  overflow-y: auto;
+  padding-right: 8px;
+  scrollbar-color: #d0d0ca transparent;
+  scrollbar-width: thin;
+}
+
+.preview-section-content .text-entry,
+.preview-section-content .award-entry {
+  padding-bottom: 18px;
+}
+
+.preview-section-content .entry-heading strong {
+  font-size: 10px;
+}
+
+.preview-section-content .entry-heading span,
+.preview-section-content .entry-role,
+.preview-section-content .entry-points,
+.preview-section-content .award-entry p,
+.preview-section-content .award-results {
+  font-size: 8px;
+}
+
+.preview-section-content .entry-points {
+  margin-top: 8px;
+}
+
+.preview-section-content .entry-points li {
+  margin-top: 5px;
+  padding-left: 10px;
+}
+
+.preview-section-content .award-results {
+  margin-top: 8px;
+  padding-left: 8px;
+}
+
+.preview-section-content .award-results ul {
+  margin: 4px 0 0;
 }
 
 @media (max-width: 760px) {

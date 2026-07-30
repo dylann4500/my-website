@@ -47,7 +47,7 @@ export type Award = {
 };
 
 export type SiteContent = {
-  designVersion: 7;
+  designVersion: 8;
   name: string;
   greeting: string;
   bio: string;
@@ -73,15 +73,15 @@ export type SiteContent = {
 };
 
 export const defaultContent: SiteContent = {
-  designVersion: 7,
+  designVersion: 8,
   name: "Dylan",
   greeting: "hi there!",
-  bio: "i'm dylan, a student at uc berkeley studying ds + applied math. currently into fish, videography, scriabin, and ml. here are some fun facts!",
+  bio: "i'm dylan, a student at uc berkeley studying ds + applied math. currently into [fish](https://en.wikipedia.org/wiki/Literature_(card_game)), videography, scriabin, and ml. here are some fun facts!",
   facts: [
     "once performed violin for the U.S. Secret Service",
-    "top 0.1% fastest typists worldwide",
+    "top 0.1% fastest [typists](https://monkeytype.com/profile/dylann4500) worldwide",
     "hit 7.5 mil impressions on my first yt video",
-    "ex-#1 nationwide aristocrat solver",
+    "ex-#1 nationwide [aristocrat](https://en.wikipedia.org/wiki/Aristocrat_Cipher) solver",
     "learning some photography on my nikon d610",
   ],
   defaultTab: "experience",
@@ -221,6 +221,59 @@ const cleanUrl = (value: unknown) => {
   }
 };
 
+const monthNumbers: Record<string, number> = {
+  jan: 0,
+  feb: 1,
+  mar: 2,
+  apr: 3,
+  may: 4,
+  jun: 5,
+  jul: 6,
+  aug: 7,
+  sep: 8,
+  oct: 9,
+  nov: 10,
+  dec: 11,
+};
+
+function endDateValue(value: string) {
+  const normalized = value.trim().toLowerCase();
+  if (/\b(present|current|now)\b/.test(normalized)) {
+    return Number.POSITIVE_INFINITY;
+  }
+
+  const matches = [
+    ...normalized.matchAll(
+      /\b(?:(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\s+)?((?:19|20)\d{2})\b/g,
+    ),
+  ];
+  const match = matches.at(-1);
+  if (!match) return Number.NEGATIVE_INFINITY;
+
+  const monthKey = match[1] === "sept" ? "sep" : match[1];
+  const month = monthKey ? monthNumbers[monthKey] : 11;
+  return Date.UTC(Number(match[2]), month, 1);
+}
+
+function compareDatesDescending(first: string, second: string) {
+  const firstValue = endDateValue(first);
+  const secondValue = endDateValue(second);
+  if (firstValue === secondValue) return 0;
+  return firstValue > secondValue ? -1 : 1;
+}
+
+export function sortExperienceEntries(entries: ResumeEntry[]) {
+  return [...entries].sort((first, second) =>
+    compareDatesDescending(first.period, second.period),
+  );
+}
+
+export function sortAwards(entries: Award[]) {
+  return [...entries].sort((first, second) =>
+    compareDatesDescending(first.year, second.year),
+  );
+}
+
 export function sanitizeContent(value: unknown): SiteContent {
   const candidate =
     value && typeof value === "object"
@@ -235,13 +288,15 @@ export function sanitizeContent(value: unknown): SiteContent {
     candidate.designVersion !== 4 &&
     candidate.designVersion !== 5 &&
     candidate.designVersion !== 6 &&
-    candidate.designVersion !== 7
+    candidate.designVersion !== 7 &&
+    candidate.designVersion !== 8
   ) {
     return defaultContent;
   }
   const isVersionTwo = candidate.designVersion === 2;
   const needsProfileUpdate = candidate.designVersion < 6;
   const needsPortfolioContentUpdate = candidate.designVersion < 7;
+  const needsLinkSyntaxUpdate = candidate.designVersion < 8;
 
   const socials = needsProfileUpdate
     ? defaultContent.socials
@@ -296,7 +351,7 @@ export function sanitizeContent(value: unknown): SiteContent {
       }))
     : [];
 
-  const facts = isVersionTwo || needsProfileUpdate
+  const facts = isVersionTwo || needsProfileUpdate || needsLinkSyntaxUpdate
     ? defaultContent.facts
     : Array.isArray(candidate.facts)
     ? candidate.facts
@@ -310,10 +365,10 @@ export function sanitizeContent(value: unknown): SiteContent {
     : defaultContent.defaultTab;
 
   return {
-    designVersion: 7,
+    designVersion: 8,
     name: cleanString(candidate.name, defaultContent.name),
     greeting: cleanString(candidate.greeting, defaultContent.greeting),
-    bio: needsProfileUpdate
+    bio: needsProfileUpdate || needsLinkSyntaxUpdate
       ? defaultContent.bio
       : cleanString(candidate.bio, defaultContent.bio),
     facts,
@@ -325,10 +380,14 @@ export function sanitizeContent(value: unknown): SiteContent {
     projects,
     photos,
     videos,
-    experience: needsPortfolioContentUpdate
-      ? defaultContent.experience
-      : cleanEntries(candidate.experience),
-    awards: needsPortfolioContentUpdate ? defaultContent.awards : awards,
+    experience: sortExperienceEntries(
+      needsPortfolioContentUpdate
+        ? defaultContent.experience
+        : cleanEntries(candidate.experience),
+    ),
+    awards: sortAwards(
+      needsPortfolioContentUpdate ? defaultContent.awards : awards,
+    ),
     eyebrow: cleanString(candidate.eyebrow),
     headline: cleanString(candidate.headline),
     intro: cleanString(candidate.intro),

@@ -5,8 +5,8 @@ import {
   useRef,
   useState,
   type KeyboardEvent,
-  type ReactNode,
 } from "react";
+import { RichText } from "@/components/RichText";
 import {
   tabIds,
   type SiteContent,
@@ -46,25 +46,6 @@ const socialFallbacks: Record<string, string> = {
 };
 
 const emailFallback = "nguyennalyd3@gmail.com";
-
-function linkedPhrase(
-  text: string,
-  phrase: string,
-  href: string,
-): ReactNode {
-  const start = text.indexOf(phrase);
-  if (start === -1) return text;
-
-  return (
-    <>
-      {text.slice(0, start)}
-      <a className="inline-link" href={href} target="_blank" rel="noreferrer">
-        {phrase}
-      </a>
-      {text.slice(start + phrase.length)}
-    </>
-  );
-}
 
 export function PortfolioFrame({
   active,
@@ -130,29 +111,11 @@ export function PortfolioFrame({
         <section className="intro-column">
           <div>
             <h1>{content.greeting}</h1>
-            <p className="bio-copy">
-              {linkedPhrase(
-                content.bio,
-                "fish",
-                "https://en.wikipedia.org/wiki/Literature_(card_game)",
-              )}
-            </p>
+            <p className="bio-copy"><RichText text={content.bio} /></p>
             <ul className="fact-list">
               {content.facts.map((fact, index) => (
                 <li key={`${fact}-${index}`}>
-                  {fact.includes("typists")
-                    ? linkedPhrase(
-                        fact,
-                        "typists",
-                        "https://monkeytype.com/profile/dylann4500",
-                      )
-                    : fact.includes("aristocrat")
-                      ? linkedPhrase(
-                          fact,
-                          "aristocrat",
-                          "https://en.wikipedia.org/wiki/Aristocrat_Cipher",
-                        )
-                      : fact}
+                  <RichText text={fact} />
                 </li>
               ))}
             </ul>
@@ -240,7 +203,7 @@ export function PortfolioFrame({
   );
 }
 
-function TabContent({
+export function TabContent({
   tab,
   content,
 }: {
@@ -261,7 +224,7 @@ function TabContent({
             {item.description && (
               <ul className="entry-points">
                 {item.description.split("\n").filter(Boolean).map((point) => (
-                  <li key={point}>{point}</li>
+                  <li key={point}><RichText text={point} /></li>
                 ))}
               </ul>
             )}
@@ -287,7 +250,7 @@ function TabContent({
               )}
               <span>{item.year}</span>
             </div>
-            {item.description && <p>{item.description}</p>}
+            {item.description && <p><RichText text={item.description} /></p>}
           </article>
         ))}
       </div>
@@ -346,7 +309,7 @@ function TabContent({
             <strong>{award.title}</strong>
             <span>{award.year}</span>
           </div>
-          {award.description && <p>{award.description}</p>}
+          {award.description && <p><RichText text={award.description} /></p>}
           {award.details && (
             <div className="award-results">
               {award.details.split("\n\n").map((group) => {
@@ -356,7 +319,7 @@ function TabContent({
                     <strong>{heading}</strong>
                     <ul>
                       {items.map((item) => (
-                        <li key={item}>{item}</li>
+                        <li key={item}><RichText text={item} /></li>
                       ))}
                     </ul>
                   </section>

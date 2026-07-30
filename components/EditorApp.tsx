@@ -1,8 +1,12 @@
 "use client";
 
 import { useEffect, useState, type ChangeEvent } from "react";
+import { RichText } from "@/components/RichText";
+import { TabContent } from "@/components/PortfolioFrame";
 import {
   defaultContent,
+  sortAwards,
+  sortExperienceEntries,
   tabIds,
   type Award,
   type Photo,
@@ -41,6 +45,7 @@ const newItems: Record<
 
 export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
   const [content, setContent] = useState(initialContent);
+  const [previewTab, setPreviewTab] = useState<TabId>(initialContent.defaultTab);
   const [state, setState] = useState("All published changes are live");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState("");
@@ -50,7 +55,7 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
     if (!draft) return;
     try {
       const parsed = JSON.parse(draft) as Partial<SiteContent>;
-      if (parsed.designVersion !== 7) {
+      if (parsed.designVersion !== 8) {
         window.localStorage.removeItem("portfolio-editor-draft");
         return;
       }
@@ -75,7 +80,26 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
 
   function updateDefaultTab(value: TabId) {
     setContent((current) => ({ ...current, defaultTab: value }));
+    setPreviewTab(value);
     markChanged();
+  }
+
+  function sortedContent(value: SiteContent): SiteContent {
+    return {
+      ...value,
+      experience: sortExperienceEntries(value.experience),
+      awards: sortAwards(value.awards),
+    };
+  }
+
+  function sortDatedSection(key: "experience" | "awards") {
+    setContent((current) => ({
+      ...current,
+      [key]:
+        key === "experience"
+          ? sortExperienceEntries(current.experience)
+          : sortAwards(current.awards),
+    }));
   }
 
   function updateFact(index: number, value: string) {
@@ -136,7 +160,12 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
   }
 
   function saveDraft() {
-    window.localStorage.setItem("portfolio-editor-draft", JSON.stringify(content));
+    const nextContent = sortedContent(content);
+    setContent(nextContent);
+    window.localStorage.setItem(
+      "portfolio-editor-draft",
+      JSON.stringify(nextContent),
+    );
     setState("Draft saved in this browser");
   }
 
@@ -144,10 +173,12 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
     setSaving(true);
     setState("Publishing…");
     try {
+      const nextContent = sortedContent(content);
+      setContent(nextContent);
       const response = await fetch("/api/content", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ content: nextContent }),
       });
       const result = (await response.json()) as {
         content?: SiteContent;
@@ -219,6 +250,10 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
               The left side controls your introduction. Add material to the
               sections whenever it is ready; empty sections stay deliberately quiet.
             </p>
+            <p className="editor-guide">
+              To link selected words, type{" "}
+              <code>[linked words](https://example.com)</code>.
+            </p>
           </div>
 
           <EditorSection title="introduction">
@@ -236,6 +271,7 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
               label="bio"
               value={content.bio}
               onChange={(value) => updateText("bio", value)}
+              linkHint
             />
             <TextField
               label="email"
@@ -256,6 +292,7 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
                   label={`fact ${index + 1}`}
                   value={fact}
                   onChange={(value) => updateFact(index, value)}
+                  linkHint
                 />
               </RepeatCard>
             ))}
@@ -292,6 +329,7 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
             onAdd={() => addItem("experience")}
             updateItem={updateItem}
             removeItem={removeItem}
+            onDatesBlur={() => sortDatedSection("experience")}
           />
 
           <RepeatSection title="projects" onAdd={() => addItem("projects")}>
@@ -322,6 +360,7 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
                   onChange={(value) =>
                     updateItem("projects", index, "description", value)
                   }
+                  linkHint
                 />
                 <TextField
                   label="url"
@@ -413,6 +452,10 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
           </RepeatSection>
 
           <RepeatSection title="awards" onAdd={() => addItem("awards")}>
+            <p className="section-note">
+              Sorted by end date after you leave the date field. Use “Present”
+              for an ongoing entry.
+            </p>
             {content.awards.map((item, index) => (
               <RepeatCard
                 key={`award-${index}`}
@@ -432,6 +475,7 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
                     onChange={(value) =>
                       updateItem("awards", index, "year", value)
                     }
+                    onBlur={() => sortDatedSection("awards")}
                   />
                 </div>
                 <TextArea
@@ -440,6 +484,7 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
                   onChange={(value) =>
                     updateItem("awards", index, "description", value)
                   }
+                  linkHint
                 />
                 <TextArea
                   label="additional results (optional)"
@@ -447,6 +492,7 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
                   onChange={(value) =>
                     updateItem("awards", index, "details", value)
                   }
+                  linkHint
                 />
               </RepeatCard>
             ))}
@@ -472,16 +518,18 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
               <span className="preview-dot" />
               live preview
             </span>
-            <span>{content.defaultTab}</span>
+            <span>{previewTab}</span>
           </div>
           <div className="preview-canvas">
             <div className="preview-index">
               <section>
                 <h2>{content.greeting || "hi there!"}</h2>
-                <p>{content.bio}</p>
+                <p><RichText text={content.bio} /></p>
                 <ul>
                   {content.facts.map((fact, index) => (
-                    <li key={`preview-fact-${index}`}>- {fact}</li>
+                    <li key={`preview-fact-${index}`}>
+                      - <RichText text={fact} />
+                    </li>
                   ))}
                 </ul>
                 <div className="preview-socials">@ &nbsp; ◎ &nbsp; ▶ &nbsp; in &nbsp; git</div>
@@ -489,12 +537,22 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
               <section className="preview-tabs">
                 <nav>
                   {tabIds.map((tab) => (
-                    <span key={tab}>
-                      {content.defaultTab === tab ? "→" : "·"} {tab}
-                    </span>
+                    <button
+                      type="button"
+                      key={tab}
+                      aria-pressed={previewTab === tab}
+                      onClick={() => setPreviewTab(tab)}
+                    >
+                      {previewTab === tab ? "→" : "·"} {tab}
+                    </button>
                   ))}
                 </nav>
-                <p>nothing here yet.</p>
+                <div className="preview-section-content">
+                  <TabContent
+                    tab={previewTab}
+                    content={sortedContent(content)}
+                  />
+                </div>
               </section>
             </div>
           </div>
@@ -567,16 +625,29 @@ function TextField({
   label,
   value,
   onChange,
+  onBlur,
+  linkHint = false,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  onBlur?: () => void;
+  linkHint?: boolean;
 }) {
   return (
     <div className="field">
       <label>
         {label}
-        <input value={value} onChange={(event) => onChange(event.target.value)} />
+        <input
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          onBlur={onBlur}
+        />
+        {linkHint && (
+          <span className="field-hint">
+            link words: [label](https://example.com)
+          </span>
+        )}
       </label>
     </div>
   );
@@ -586,10 +657,12 @@ function TextArea({
   label,
   value,
   onChange,
+  linkHint = false,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  linkHint?: boolean;
 }) {
   return (
     <div className="field">
@@ -599,6 +672,11 @@ function TextArea({
           value={value}
           onChange={(event) => onChange(event.target.value)}
         />
+        {linkHint && (
+          <span className="field-hint">
+            link words: [label](https://example.com)
+          </span>
+        )}
       </label>
     </div>
   );
@@ -637,6 +715,7 @@ function ExperienceEditor({
   onAdd,
   updateItem,
   removeItem,
+  onDatesBlur,
 }: {
   entries: ResumeEntry[];
   onAdd: () => void;
@@ -647,9 +726,14 @@ function ExperienceEditor({
     value: string,
   ) => void;
   removeItem: (key: ArrayKey, index: number) => void;
+  onDatesBlur: () => void;
 }) {
   return (
     <RepeatSection title="experience" onAdd={onAdd}>
+      <p className="section-note">
+        Sorted by end date after you leave the date field. Use “Present” for an
+        ongoing role.
+      </p>
       {entries.map((item, index) => (
         <RepeatCard
           key={`experience-${index}`}
@@ -677,6 +761,7 @@ function ExperienceEditor({
             onChange={(value) =>
               updateItem("experience", index, "period", value)
             }
+            onBlur={onDatesBlur}
           />
           <TextArea
             label="description"
@@ -684,6 +769,7 @@ function ExperienceEditor({
             onChange={(value) =>
               updateItem("experience", index, "description", value)
             }
+            linkHint
           />
         </RepeatCard>
       ))}
