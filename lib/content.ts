@@ -1,3 +1,13 @@
+export const tabIds = [
+  "experience",
+  "projects",
+  "videos",
+  "gallery",
+  "awards",
+] as const;
+
+export type TabId = (typeof tabIds)[number];
+
 export type SocialLink = {
   label: string;
   url: string;
@@ -29,100 +39,70 @@ export type ResumeEntry = {
   description: string;
 };
 
+export type Award = {
+  title: string;
+  year: string;
+};
+
 export type SiteContent = {
+  designVersion: 2;
   name: string;
+  greeting: string;
+  bio: string;
+  facts: string[];
+  defaultTab: TabId;
+  email: string;
+  socials: SocialLink[];
+  projects: Project[];
+  photos: Photo[];
+  videos: Video[];
+  experience: ResumeEntry[];
+  awards: Award[];
+  // Legacy fields are retained so previously saved content remains readable.
   eyebrow: string;
   headline: string;
   intro: string;
   location: string;
   availability: string;
   about: string;
-  email: string;
-  socials: SocialLink[];
-  projects: Project[];
-  photos: Photo[];
-  videos: Video[];
   resumeSummary: string;
   resumeUrl: string;
-  experience: ResumeEntry[];
   education: ResumeEntry[];
 };
 
 export const defaultContent: SiteContent = {
+  designVersion: 2,
   name: "Dylan",
-  eyebrow: "Independent creative",
-  headline: "Images, motion, and digital ideas.",
-  intro:
-    "I make considered work across visual storytelling, film, and digital projects. This is a growing index of selected things I have made.",
-  location: "Los Angeles, California",
-  availability: "Available for select collaborations",
-  about:
-    "I am an independent creative interested in simple ideas, carefully made. My practice moves between still images, moving images, and work for the web.",
+  greeting: "hi there!",
+  bio: "i'm dylan, currently studying ds + applied math at uc berkeley. here are some fun facts:",
+  facts: [
+    "once performed violin for U.S. Secret Service",
+    "top 0.1% fastest typists worldwide",
+    "hit 7.5 mil impressions on my first yt video",
+    "trying to learn photography on my nikon d610",
+  ],
+  defaultTab: "experience",
   email: "hello@example.com",
   socials: [
-    { label: "Instagram", url: "https://instagram.com/" },
-    { label: "YouTube", url: "https://youtube.com/" },
-    { label: "LinkedIn", url: "https://linkedin.com/" },
+    { label: "Instagram", url: "" },
+    { label: "YouTube", url: "" },
+    { label: "LinkedIn", url: "" },
+    { label: "GitHub", url: "" },
   ],
-  projects: [
-    {
-      title: "A Quiet Project",
-      year: "2026",
-      description:
-        "A concise description of the project, your role, and the idea that made the work worth doing.",
-      url: "",
-    },
-    {
-      title: "Second Study",
-      year: "2025",
-      description:
-        "A second selected piece. Replace this text, title, year, and link from the editor.",
-      url: "",
-    },
-    {
-      title: "Ongoing Archive",
-      year: "2024—",
-      description:
-        "An evolving collection of experiments, observations, and work in progress.",
-      url: "",
-    },
-  ],
-  photos: [
-    { title: "Untitled I", caption: "Los Angeles, 2026", url: "" },
-    { title: "Untitled II", caption: "California, 2026", url: "" },
-    { title: "Untitled III", caption: "Somewhere, 2025", url: "" },
-  ],
-  videos: [
-    { title: "First Film", year: "2026", url: "" },
-    { title: "Second Film", year: "2025", url: "" },
-  ],
-  resumeSummary:
-    "A short professional summary goes here. Keep it direct: what you do, what you care about, and the kind of work you want to make next.",
+  projects: [],
+  photos: [],
+  videos: [],
+  experience: [],
+  awards: [],
+  eyebrow: "",
+  headline: "",
+  intro: "",
+  location: "",
+  availability: "",
+  about: "",
+  resumeSummary: "",
   resumeUrl: "",
-  experience: [
-    {
-      title: "Role or discipline",
-      organization: "Studio / Company",
-      period: "2024—Present",
-      description:
-        "Describe the scope of the role and one or two meaningful outcomes.",
-    },
-    {
-      title: "Previous role",
-      organization: "Organization",
-      period: "2022—2024",
-      description:
-        "A brief, readable account of your responsibilities and contribution.",
-    },
-  ],
-  education: [
-    {
-      title: "Program or degree",
-      organization: "School / Institution",
-      period: "2018—2022",
-      description: "Optional detail about your focus, honors, or thesis.",
-    },
-  ],
+  education: [],
 };
 
 const cleanString = (value: unknown, fallback = "") =>
@@ -144,6 +124,8 @@ export function sanitizeContent(value: unknown): SiteContent {
   const candidate =
     value && typeof value === "object" ? (value as Partial<SiteContent>) : {};
 
+  if (candidate.designVersion !== 2) return defaultContent;
+
   const socials = Array.isArray(candidate.socials)
     ? candidate.socials.slice(0, 12).map((item) => ({
         label: cleanString(item?.label),
@@ -158,7 +140,7 @@ export function sanitizeContent(value: unknown): SiteContent {
         description: cleanString(item?.description),
         url: cleanUrl(item?.url),
       }))
-    : defaultContent.projects;
+    : [];
 
   const photos = Array.isArray(candidate.photos)
     ? candidate.photos.slice(0, 60).map((item) => ({
@@ -166,7 +148,7 @@ export function sanitizeContent(value: unknown): SiteContent {
         caption: cleanString(item?.caption),
         url: cleanUrl(item?.url),
       }))
-    : defaultContent.photos;
+    : [];
 
   const videos = Array.isArray(candidate.videos)
     ? candidate.videos.slice(0, 30).map((item) => ({
@@ -174,9 +156,9 @@ export function sanitizeContent(value: unknown): SiteContent {
         year: cleanString(item?.year),
         url: cleanUrl(item?.url),
       }))
-    : defaultContent.videos;
+    : [];
 
-  const cleanEntries = (entries: unknown, fallback: ResumeEntry[]) =>
+  const cleanEntries = (entries: unknown) =>
     Array.isArray(entries)
       ? entries.slice(0, 30).map((item) => ({
           title: cleanString(item?.title),
@@ -184,54 +166,48 @@ export function sanitizeContent(value: unknown): SiteContent {
           period: cleanString(item?.period),
           description: cleanString(item?.description),
         }))
-      : fallback;
+      : [];
+
+  const awards = Array.isArray(candidate.awards)
+    ? candidate.awards.slice(0, 30).map((item) => ({
+        title: cleanString(item?.title),
+        year: cleanString(item?.year),
+      }))
+    : [];
+
+  const facts = Array.isArray(candidate.facts)
+    ? candidate.facts
+        .slice(0, 12)
+        .map((fact) => cleanString(fact))
+        .filter(Boolean)
+    : defaultContent.facts;
+
+  const defaultTab = tabIds.includes(candidate.defaultTab as TabId)
+    ? (candidate.defaultTab as TabId)
+    : defaultContent.defaultTab;
 
   return {
+    designVersion: 2,
     name: cleanString(candidate.name, defaultContent.name),
-    eyebrow: cleanString(candidate.eyebrow, defaultContent.eyebrow),
-    headline: cleanString(candidate.headline, defaultContent.headline),
-    intro: cleanString(candidate.intro, defaultContent.intro),
-    location: cleanString(candidate.location, defaultContent.location),
-    availability: cleanString(
-      candidate.availability,
-      defaultContent.availability,
-    ),
-    about: cleanString(candidate.about, defaultContent.about),
+    greeting: cleanString(candidate.greeting, defaultContent.greeting),
+    bio: cleanString(candidate.bio, defaultContent.bio),
+    facts,
+    defaultTab,
     email: cleanString(candidate.email, defaultContent.email),
     socials,
     projects,
     photos,
     videos,
-    resumeSummary: cleanString(
-      candidate.resumeSummary,
-      defaultContent.resumeSummary,
-    ),
+    experience: cleanEntries(candidate.experience),
+    awards,
+    eyebrow: cleanString(candidate.eyebrow),
+    headline: cleanString(candidate.headline),
+    intro: cleanString(candidate.intro),
+    location: cleanString(candidate.location),
+    availability: cleanString(candidate.availability),
+    about: cleanString(candidate.about),
+    resumeSummary: cleanString(candidate.resumeSummary),
     resumeUrl: cleanUrl(candidate.resumeUrl),
-    experience: cleanEntries(candidate.experience, defaultContent.experience),
-    education: cleanEntries(candidate.education, defaultContent.education),
+    education: cleanEntries(candidate.education),
   };
-}
-
-export function youtubeEmbedUrl(value: string) {
-  if (!value) return "";
-  try {
-    const url = new URL(value);
-    if (url.hostname.includes("youtu.be")) {
-      const id = url.pathname.split("/").filter(Boolean)[0];
-      return id ? `https://www.youtube.com/embed/${id}` : "";
-    }
-    if (url.hostname.includes("youtube.com")) {
-      const id =
-        url.searchParams.get("v") ??
-        url.pathname.split("/").filter(Boolean).at(-1);
-      return id ? `https://www.youtube.com/embed/${id}` : "";
-    }
-    if (url.hostname.includes("vimeo.com")) {
-      const id = url.pathname.split("/").filter(Boolean).at(-1);
-      return id ? `https://player.vimeo.com/video/${id}` : "";
-    }
-  } catch {
-    return "";
-  }
-  return "";
 }

@@ -1,58 +1,36 @@
-import type { ReactNode } from "react";
-import { ThemeToggle } from "@/components/ThemeToggle";
+"use client";
+
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import {
-  youtubeEmbedUrl,
+  tabIds,
   type SiteContent,
+  type TabId,
 } from "@/lib/content";
 
 type PageName = "home" | "projects" | "photos" | "videos" | "resume";
 
-const navItems: { id: PageName; label: string; href: string }[] = [
-  { id: "home", label: "Index", href: "/" },
-  { id: "projects", label: "Projects", href: "/projects" },
-  { id: "photos", label: "Photos", href: "/photos" },
-  { id: "videos", label: "Videos", href: "/videos" },
-  { id: "resume", label: "Résumé", href: "/resume" },
-];
+const tabLabels: Record<TabId, string> = {
+  experience: "experience",
+  projects: "projects",
+  videos: "videos",
+  gallery: "gallery",
+  awards: "awards",
+};
 
-function Nav({ active, mobile = false }: { active: PageName; mobile?: boolean }) {
-  return (
-    <nav className={mobile ? "mobile-nav" : "main-nav"} aria-label="Main">
-      {navItems.map((item) => (
-        <a
-          href={item.href}
-          key={item.id}
-          aria-current={active === item.id ? "page" : undefined}
-        >
-          {item.label}
-        </a>
-      ))}
-    </nav>
-  );
-}
+const pageTab: Record<PageName, TabId | null> = {
+  home: null,
+  projects: "projects",
+  photos: "gallery",
+  videos: "videos",
+  resume: "experience",
+};
 
-function Footer({ content }: { content: SiteContent }) {
-  return (
-    <footer className="site-footer">
-      <span>
-        © {new Date().getFullYear()} {content.name} · {content.location}
-      </span>
-      <div className="social-links">
-        {content.socials.map((social, index) => (
-          <a
-            href={social.url || "#"}
-            key={`${social.label}-${index}`}
-            target={social.url ? "_blank" : undefined}
-            rel={social.url ? "noreferrer" : undefined}
-          >
-            {social.label}
-          </a>
-        ))}
-        <a href={`mailto:${content.email}`}>Email</a>
-      </div>
-    </footer>
-  );
-}
+const socialMarks: Record<string, string> = {
+  instagram: "◎",
+  youtube: "▶",
+  linkedin: "in",
+  github: "git",
+};
 
 export function PortfolioFrame({
   active,
@@ -61,250 +39,252 @@ export function PortfolioFrame({
   active: PageName;
   content: SiteContent;
 }) {
-  let view: ReactNode;
+  const initialTab = pageTab[active] ?? content.defaultTab;
+  const [selectedTab, setSelectedTab] = useState<TabId>(initialTab);
+  const [dark, setDark] = useState(false);
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
-  if (active === "home") view = <HomeView content={content} />;
-  else if (active === "projects") view = <ProjectsView content={content} />;
-  else if (active === "photos") view = <PhotosView content={content} />;
-  else if (active === "videos") view = <VideosView content={content} />;
-  else view = <ResumeView content={content} />;
+  useEffect(() => {
+    const saved = window.localStorage.getItem("portfolio-theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const nextDark = saved ? saved === "dark" : prefersDark;
+    setDark(nextDark);
+    document.documentElement.dataset.theme = nextDark ? "dark" : "light";
+  }, []);
+
+  function toggleTheme() {
+    const nextDark = !dark;
+    setDark(nextDark);
+    document.documentElement.dataset.theme = nextDark ? "dark" : "light";
+    window.localStorage.setItem(
+      "portfolio-theme",
+      nextDark ? "dark" : "light",
+    );
+  }
+
+  function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
+    let nextIndex = index;
+    if (event.key === "ArrowDown" || event.key === "ArrowRight") {
+      nextIndex = (index + 1) % tabIds.length;
+    } else if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
+      nextIndex = (index - 1 + tabIds.length) % tabIds.length;
+    } else if (event.key === "Home") {
+      nextIndex = 0;
+    } else if (event.key === "End") {
+      nextIndex = tabIds.length - 1;
+    } else {
+      return;
+    }
+    event.preventDefault();
+    setSelectedTab(tabIds[nextIndex]);
+    tabRefs.current[nextIndex]?.focus();
+  }
 
   return (
-    <div className="site-shell">
-      <header className="site-header">
-        <a className="wordmark" href="/" aria-label={`${content.name}, home`}>
-          {content.name}
-        </a>
-        <Nav active={active} />
-        <div className="header-actions">
-          <ThemeToggle />
-        </div>
-      </header>
-      <Nav active={active} mobile />
-      <main className="page-main">{view}</main>
-      <Footer content={content} />
-    </div>
-  );
-}
+    <main className="personal-page">
+      <section className="personal-index" aria-label={`${content.name}'s personal website`}>
+        <button
+          className="mode-button"
+          type="button"
+          onClick={toggleTheme}
+          aria-label={`Switch to ${dark ? "light" : "dark"} mode`}
+          title={`Switch to ${dark ? "light" : "dark"} mode`}
+        >
+          {dark ? "☀" : "◐"}
+        </button>
 
-function HomeView({ content }: { content: SiteContent }) {
-  return (
-    <>
-      <section className="home-hero">
-        <p className="eyebrow">{content.eyebrow}</p>
-        <div className="hero-copy">
-          <h1 className="hero-title">{content.headline}</h1>
-          <div className="hero-intro">
-            <p>{content.intro}</p>
-            <div>
-              <p>{content.availability}</p>
-              <a className="arrow-link" href={`mailto:${content.email}`}>
-                Start a conversation ↗
-              </a>
-            </div>
+        <section className="intro-column">
+          <div>
+            <h1>{content.greeting}</h1>
+            <p className="bio-copy">{content.bio}</p>
+            <ul className="fact-list">
+              {content.facts.map((fact, index) => (
+                <li key={`${fact}-${index}`}>{fact}</li>
+              ))}
+            </ul>
           </div>
-        </div>
-      </section>
-      <section className="featured-strip">
-        <p className="section-kicker">Selected work</p>
-        <div className="featured-list">
-          {content.projects.slice(0, 4).map((project, index) => (
+
+          <nav className="social-row" aria-label="Social links">
             <a
-              className="featured-row"
-              href={project.url || "/projects"}
-              key={`${project.title}-${index}`}
+              className="social-button"
+              href={`mailto:${content.email}`}
+              aria-label="Email"
+              title="Email"
             >
-              <span className="project-index">
-                {String(index + 1).padStart(2, "0")}
-              </span>
-              <span>{project.title}</span>
-              <span>{project.year}</span>
+              @
             </a>
-          ))}
-        </div>
+            {content.socials.map((social, index) => {
+              const key = social.label.toLowerCase();
+              return (
+                <a
+                  className="social-button"
+                  href={social.url || "#"}
+                  key={`${social.label}-${index}`}
+                  aria-label={social.label}
+                  title={social.label}
+                  target={social.url ? "_blank" : undefined}
+                  rel={social.url ? "noreferrer" : undefined}
+                  onClick={(event) => {
+                    if (!social.url) event.preventDefault();
+                  }}
+                >
+                  {socialMarks[key] ?? social.label.slice(0, 2).toLowerCase()}
+                </a>
+              );
+            })}
+          </nav>
+        </section>
+
+        <section className="content-column">
+          <div
+            className="tab-list"
+            role="tablist"
+            aria-label="Portfolio sections"
+            aria-orientation="vertical"
+          >
+            {tabIds.map((tab, index) => (
+              <button
+                type="button"
+                role="tab"
+                id={`tab-${tab}`}
+                aria-controls={`panel-${tab}`}
+                aria-selected={selectedTab === tab}
+                tabIndex={selectedTab === tab ? 0 : -1}
+                className="tab-button"
+                key={tab}
+                ref={(node) => {
+                  tabRefs.current[index] = node;
+                }}
+                onClick={() => setSelectedTab(tab)}
+                onKeyDown={(event) => handleTabKeyDown(event, index)}
+              >
+                <span aria-hidden="true">
+                  {selectedTab === tab ? "→" : "·"}
+                </span>
+                {tabLabels[tab]}
+              </button>
+            ))}
+          </div>
+
+          <div
+            className="tab-panel"
+            role="tabpanel"
+            id={`panel-${selectedTab}`}
+            aria-labelledby={`tab-${selectedTab}`}
+            tabIndex={0}
+          >
+            <TabContent tab={selectedTab} content={content} />
+          </div>
+        </section>
       </section>
-    </>
+    </main>
   );
 }
 
-function PageHeading({
-  kicker,
-  title,
-  description,
+function TabContent({
+  tab,
+  content,
 }: {
-  kicker: string;
-  title: string;
-  description: string;
+  tab: TabId;
+  content: SiteContent;
 }) {
-  return (
-    <header className="page-heading">
-      <p className="section-kicker">{kicker}</p>
-      <div>
-        <h1 className="page-title">{title}</h1>
-        <p className="page-description">{description}</p>
-      </div>
-    </header>
-  );
-}
-
-function ProjectsView({ content }: { content: SiteContent }) {
-  return (
-    <>
-      <PageHeading
-        kicker="Selected work"
-        title="Projects"
-        description="A concise index of finished work, ongoing experiments, and collaborations."
-      />
-      <section className="project-list">
-        {content.projects.map((project, index) => (
-          <article className="project-card" key={`${project.title}-${index}`}>
-            <span className="project-index">
-              {String(index + 1).padStart(2, "0")}
-            </span>
-            <div>
-              <h2>{project.title}</h2>
-              <p>{project.description}</p>
+  if (tab === "experience") {
+    if (!content.experience.length) return <EmptyState />;
+    return (
+      <div className="text-list">
+        {content.experience.map((item, index) => (
+          <article className="text-entry" key={`${item.title}-${index}`}>
+            <div className="entry-heading">
+              <strong>{item.title}</strong>
+              <span>{item.period}</span>
             </div>
-            <a
-              className="project-link"
-              href={project.url || "#"}
-              target={project.url ? "_blank" : undefined}
-              rel={project.url ? "noreferrer" : undefined}
-            >
-              {project.url ? "View project ↗" : project.year}
-            </a>
+            <p>{item.organization}</p>
+            {item.description && <p>{item.description}</p>}
           </article>
         ))}
-      </section>
-    </>
-  );
-}
+      </div>
+    );
+  }
 
-function PhotosView({ content }: { content: SiteContent }) {
-  return (
-    <>
-      <PageHeading
-        kicker="Ongoing archive"
-        title="Photos"
-        description="A changing collection of places, people, details, and things noticed along the way."
-      />
-      <section className="photo-grid">
-        {content.photos.map((photo, index) => (
-          <figure className="photo-card" key={`${photo.title}-${index}`}>
-            <div className="photo-frame">
-              {photo.url ? (
-                <img src={photo.url} alt={photo.title} />
+  if (tab === "projects") {
+    if (!content.projects.length) return <EmptyState />;
+    return (
+      <div className="text-list">
+        {content.projects.map((item, index) => (
+          <article className="text-entry" key={`${item.title}-${index}`}>
+            <div className="entry-heading">
+              {item.url ? (
+                <a href={item.url} target="_blank" rel="noreferrer">
+                  <strong>{item.title} ↗</strong>
+                </a>
               ) : (
-                <span className="photo-placeholder">
-                  Image {String(index + 1).padStart(2, "0")}
-                </span>
+                <strong>{item.title}</strong>
               )}
+              <span>{item.year}</span>
             </div>
-            <figcaption className="photo-caption">
+            {item.description && <p>{item.description}</p>}
+          </article>
+        ))}
+      </div>
+    );
+  }
+
+  if (tab === "videos") {
+    if (!content.videos.length) return <EmptyState />;
+    return (
+      <div className="link-list">
+        {content.videos.map((item, index) => (
+          <a
+            href={item.url || "#"}
+            target={item.url ? "_blank" : undefined}
+            rel={item.url ? "noreferrer" : undefined}
+            onClick={(event) => {
+              if (!item.url) event.preventDefault();
+            }}
+            key={`${item.title}-${index}`}
+          >
+            <span>{item.title}</span>
+            <span>{item.year || "↗"}</span>
+          </a>
+        ))}
+      </div>
+    );
+  }
+
+  if (tab === "gallery") {
+    if (!content.photos.length) return <EmptyState />;
+    return (
+      <div className="mini-gallery">
+        {content.photos.map((photo, index) => (
+          <figure key={`${photo.title}-${index}`}>
+            {photo.url ? (
+              <img src={photo.url} alt={photo.title} />
+            ) : (
+              <div className="image-empty">{String(index + 1).padStart(2, "0")}</div>
+            )}
+            <figcaption>
               <span>{photo.title}</span>
               <span>{photo.caption}</span>
             </figcaption>
           </figure>
         ))}
-      </section>
-    </>
-  );
-}
-
-function VideosView({ content }: { content: SiteContent }) {
-  return (
-    <>
-      <PageHeading
-        kicker="Moving image"
-        title="Videos"
-        description="Films, conversations, and other moving-image work from YouTube and beyond."
-      />
-      <section className="video-list">
-        {content.videos.map((video, index) => {
-          const embedUrl = youtubeEmbedUrl(video.url);
-          return (
-            <article className="video-card" key={`${video.title}-${index}`}>
-              <div className="video-frame">
-                {embedUrl ? (
-                  <iframe
-                    src={embedUrl}
-                    title={video.title}
-                    loading="lazy"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                ) : (
-                  <span className="play-mark" aria-hidden="true">
-                    ▶
-                  </span>
-                )}
-              </div>
-              <div className="video-meta">
-                <h2>{video.title}</h2>
-                <span>{video.year}</span>
-              </div>
-            </article>
-          );
-        })}
-      </section>
-    </>
-  );
-}
-
-function ResumeView({ content }: { content: SiteContent }) {
-  return (
-    <>
-      <PageHeading
-        kicker="Background"
-        title="Résumé"
-        description={content.about}
-      />
-      <section className="resume-layout">
-        <aside className="resume-side">
-          <p>{content.resumeSummary}</p>
-          {content.resumeUrl && (
-            <a
-              className="arrow-link"
-              href={content.resumeUrl}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Download PDF ↗
-            </a>
-          )}
-        </aside>
-        <div>
-          <ResumeSection label="Experience" entries={content.experience} />
-          <ResumeSection label="Education" entries={content.education} />
-        </div>
-      </section>
-    </>
-  );
-}
-
-function ResumeSection({
-  label,
-  entries,
-}: {
-  label: string;
-  entries: SiteContent["experience"];
-}) {
-  return (
-    <section className="resume-section">
-      <p className="section-kicker">{label}</p>
-      <div>
-        {entries.map((entry, index) => (
-          <article
-            className="resume-entry"
-            key={`${entry.title}-${entry.organization}-${index}`}
-          >
-            <h3>{entry.title}</h3>
-            <p className="resume-company">{entry.organization}</p>
-            <p className="resume-period">{entry.period}</p>
-            <p>{entry.description}</p>
-          </article>
-        ))}
       </div>
-    </section>
+    );
+  }
+
+  if (!content.awards.length) return <EmptyState />;
+  return (
+    <div className="link-list">
+      {content.awards.map((award, index) => (
+        <div key={`${award.title}-${index}`}>
+          <span>{award.title}</span>
+          <span>{award.year}</span>
+        </div>
+      ))}
+    </div>
   );
+}
+
+function EmptyState() {
+  return <p className="empty-state">nothing here yet.</p>;
 }

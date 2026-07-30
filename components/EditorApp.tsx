@@ -3,23 +3,40 @@
 import { useEffect, useState, type ChangeEvent } from "react";
 import {
   defaultContent,
+  tabIds,
+  type Award,
   type Photo,
   type Project,
   type ResumeEntry,
   type SiteContent,
   type SocialLink,
+  type TabId,
   type Video,
 } from "@/lib/content";
 
-type ArrayKey = "socials" | "projects" | "photos" | "videos" | "experience" | "education";
+type ArrayKey =
+  | "socials"
+  | "projects"
+  | "photos"
+  | "videos"
+  | "experience"
+  | "awards";
 
-const newItems: Record<ArrayKey, SocialLink | Project | Photo | Video | ResumeEntry> = {
+const newItems: Record<
+  ArrayKey,
+  SocialLink | Project | Photo | Video | ResumeEntry | Award
+> = {
   socials: { label: "New link", url: "" },
-  projects: { title: "New project", year: "2026", description: "", url: "" },
+  projects: { title: "New project", year: "", description: "", url: "" },
   photos: { title: "Untitled", caption: "", url: "" },
-  videos: { title: "New video", year: "2026", url: "" },
-  experience: { title: "Role", organization: "Organization", period: "", description: "" },
-  education: { title: "Program", organization: "Institution", period: "", description: "" },
+  videos: { title: "New video", year: "", url: "" },
+  experience: {
+    title: "Role",
+    organization: "Organization",
+    period: "",
+    description: "",
+  },
+  awards: { title: "Award", year: "" },
 };
 
 export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
@@ -32,16 +49,59 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
     const draft = window.localStorage.getItem("portfolio-editor-draft");
     if (!draft) return;
     try {
-      setContent(JSON.parse(draft));
+      const parsed = JSON.parse(draft) as Partial<SiteContent>;
+      if (parsed.designVersion !== 2) {
+        window.localStorage.removeItem("portfolio-editor-draft");
+        return;
+      }
+      setContent(parsed as SiteContent);
       setState("Draft restored from this browser");
     } catch {
       window.localStorage.removeItem("portfolio-editor-draft");
     }
   }, []);
 
-  function updateField(key: keyof SiteContent, value: string) {
-    setContent((current) => ({ ...current, [key]: value }));
+  function markChanged() {
     setState("Unpublished changes");
+  }
+
+  function updateText(
+    key: "name" | "greeting" | "bio" | "email",
+    value: string,
+  ) {
+    setContent((current) => ({ ...current, [key]: value }));
+    markChanged();
+  }
+
+  function updateDefaultTab(value: TabId) {
+    setContent((current) => ({ ...current, defaultTab: value }));
+    markChanged();
+  }
+
+  function updateFact(index: number, value: string) {
+    setContent((current) => ({
+      ...current,
+      facts: current.facts.map((fact, factIndex) =>
+        factIndex === index ? value : fact,
+      ),
+    }));
+    markChanged();
+  }
+
+  function addFact() {
+    setContent((current) => ({
+      ...current,
+      facts: [...current.facts, "new fun fact"],
+    }));
+    markChanged();
+  }
+
+  function removeFact(index: number) {
+    setContent((current) => ({
+      ...current,
+      facts: current.facts.filter((_, factIndex) => factIndex !== index),
+    }));
+    markChanged();
   }
 
   function updateItem(
@@ -56,7 +116,7 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
         itemIndex === index ? { ...item, [field]: value } : item,
       ),
     }));
-    setState("Unpublished changes");
+    markChanged();
   }
 
   function addItem(key: ArrayKey) {
@@ -64,7 +124,7 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
       ...current,
       [key]: [...current[key], { ...newItems[key] }],
     }));
-    setState("Unpublished changes");
+    markChanged();
   }
 
   function removeItem(key: ArrayKey, index: number) {
@@ -72,7 +132,7 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
       ...current,
       [key]: current[key].filter((_, itemIndex) => itemIndex !== index),
     }));
-    setState("Unpublished changes");
+    markChanged();
   }
 
   function saveDraft() {
@@ -126,24 +186,19 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
     }
   }
 
-  function resetDraft() {
-    setContent(defaultContent);
-    setState("Starter content restored — not yet published");
-  }
-
   return (
     <main className="editor-shell">
       <header className="editor-topbar">
         <div className="editor-brand">
-          <strong>Site editor</strong>
+          <strong>site editor</strong>
           <span className="save-state">{state}</span>
         </div>
         <div className="editor-actions">
           <a className="editor-button" href="/" target="_blank">
-            View site ↗
+            view site ↗
           </a>
           <button className="editor-button" type="button" onClick={saveDraft}>
-            Save draft
+            save draft
           </button>
           <button
             className="editor-button primary"
@@ -151,7 +206,7 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
             onClick={publish}
             disabled={saving}
           >
-            {saving ? "Publishing…" : "Publish"}
+            {saving ? "publishing…" : "publish"}
           </button>
         </div>
       </header>
@@ -159,62 +214,192 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
       <div className="editor-workspace">
         <section className="editor-panel">
           <div className="editor-intro">
-            <h1>Make it yours.</h1>
+            <h1>edit your index.</h1>
             <p>
-              Edit the fields below and watch the preview update. Save a private
-              draft whenever you like; Publish sends the changes to the live site.
+              The left side controls your introduction. Add material to the
+              sections whenever it is ready; empty sections stay deliberately quiet.
             </p>
           </div>
 
-          <EditorSection title="Identity">
-            <TextField label="Your name" value={content.name} onChange={(v) => updateField("name", v)} />
-            <TextField label="Small introduction" value={content.eyebrow} onChange={(v) => updateField("eyebrow", v)} />
-            <TextArea label="Main headline" value={content.headline} onChange={(v) => updateField("headline", v)} />
-            <TextArea label="Short introduction" value={content.intro} onChange={(v) => updateField("intro", v)} />
-            <div className="field-row">
-              <TextField label="Location" value={content.location} onChange={(v) => updateField("location", v)} />
-              <TextField label="Availability" value={content.availability} onChange={(v) => updateField("availability", v)} />
-            </div>
-            <TextArea label="About" value={content.about} onChange={(v) => updateField("about", v)} />
-            <TextField label="Email" value={content.email} onChange={(v) => updateField("email", v)} />
+          <EditorSection title="introduction">
+            <TextField
+              label="name"
+              value={content.name}
+              onChange={(value) => updateText("name", value)}
+            />
+            <TextField
+              label="small header"
+              value={content.greeting}
+              onChange={(value) => updateText("greeting", value)}
+            />
+            <TextArea
+              label="bio"
+              value={content.bio}
+              onChange={(value) => updateText("bio", value)}
+            />
+            <TextField
+              label="email"
+              value={content.email}
+              onChange={(value) => updateText("email", value)}
+            />
+            <SelectField
+              label="default section"
+              value={content.defaultTab}
+              onChange={updateDefaultTab}
+            />
           </EditorSection>
 
-          <RepeatSection title="Social links" onAdd={() => addItem("socials")}>
+          <RepeatSection title="fun facts" onAdd={addFact}>
+            {content.facts.map((fact, index) => (
+              <RepeatCard key={`fact-${index}`} onRemove={() => removeFact(index)}>
+                <TextField
+                  label={`fact ${index + 1}`}
+                  value={fact}
+                  onChange={(value) => updateFact(index, value)}
+                />
+              </RepeatCard>
+            ))}
+          </RepeatSection>
+
+          <RepeatSection title="social links" onAdd={() => addItem("socials")}>
             {content.socials.map((item, index) => (
-              <RepeatCard key={`social-${index}`} onRemove={() => removeItem("socials", index)}>
+              <RepeatCard
+                key={`social-${index}`}
+                onRemove={() => removeItem("socials", index)}
+              >
                 <div className="field-row">
-                  <TextField label="Label" value={item.label} onChange={(v) => updateItem("socials", index, "label", v)} />
-                  <TextField label="URL" value={item.url} onChange={(v) => updateItem("socials", index, "url", v)} />
+                  <TextField
+                    label="platform"
+                    value={item.label}
+                    onChange={(value) =>
+                      updateItem("socials", index, "label", value)
+                    }
+                  />
+                  <TextField
+                    label="url"
+                    value={item.url}
+                    onChange={(value) =>
+                      updateItem("socials", index, "url", value)
+                    }
+                  />
                 </div>
               </RepeatCard>
             ))}
           </RepeatSection>
 
-          <RepeatSection title="Projects" onAdd={() => addItem("projects")}>
+          <ExperienceEditor
+            entries={content.experience}
+            onAdd={() => addItem("experience")}
+            updateItem={updateItem}
+            removeItem={removeItem}
+          />
+
+          <RepeatSection title="projects" onAdd={() => addItem("projects")}>
             {content.projects.map((item, index) => (
-              <RepeatCard key={`project-${index}`} onRemove={() => removeItem("projects", index)}>
+              <RepeatCard
+                key={`project-${index}`}
+                onRemove={() => removeItem("projects", index)}
+              >
                 <div className="field-row">
-                  <TextField label="Title" value={item.title} onChange={(v) => updateItem("projects", index, "title", v)} />
-                  <TextField label="Year" value={item.year} onChange={(v) => updateItem("projects", index, "year", v)} />
+                  <TextField
+                    label="title"
+                    value={item.title}
+                    onChange={(value) =>
+                      updateItem("projects", index, "title", value)
+                    }
+                  />
+                  <TextField
+                    label="year"
+                    value={item.year}
+                    onChange={(value) =>
+                      updateItem("projects", index, "year", value)
+                    }
+                  />
                 </div>
-                <TextArea label="Description" value={item.description} onChange={(v) => updateItem("projects", index, "description", v)} />
-                <TextField label="Project URL" value={item.url} onChange={(v) => updateItem("projects", index, "url", v)} />
+                <TextArea
+                  label="description"
+                  value={item.description}
+                  onChange={(value) =>
+                    updateItem("projects", index, "description", value)
+                  }
+                />
+                <TextField
+                  label="url"
+                  value={item.url}
+                  onChange={(value) =>
+                    updateItem("projects", index, "url", value)
+                  }
+                />
               </RepeatCard>
             ))}
           </RepeatSection>
 
-          <RepeatSection title="Photo gallery" onAdd={() => addItem("photos")}>
-            {content.photos.map((item, index) => (
-              <RepeatCard key={`photo-${index}`} onRemove={() => removeItem("photos", index)}>
+          <RepeatSection title="videos" onAdd={() => addItem("videos")}>
+            {content.videos.map((item, index) => (
+              <RepeatCard
+                key={`video-${index}`}
+                onRemove={() => removeItem("videos", index)}
+              >
                 <div className="field-row">
-                  <TextField label="Title / alt text" value={item.title} onChange={(v) => updateItem("photos", index, "title", v)} />
-                  <TextField label="Caption" value={item.caption} onChange={(v) => updateItem("photos", index, "caption", v)} />
+                  <TextField
+                    label="title"
+                    value={item.title}
+                    onChange={(value) =>
+                      updateItem("videos", index, "title", value)
+                    }
+                  />
+                  <TextField
+                    label="year"
+                    value={item.year}
+                    onChange={(value) =>
+                      updateItem("videos", index, "year", value)
+                    }
+                  />
                 </div>
-                <TextField label="Image URL" value={item.url} onChange={(v) => updateItem("photos", index, "url", v)} />
+                <TextField
+                  label="youtube url"
+                  value={item.url}
+                  onChange={(value) =>
+                    updateItem("videos", index, "url", value)
+                  }
+                />
+              </RepeatCard>
+            ))}
+          </RepeatSection>
+
+          <RepeatSection title="gallery" onAdd={() => addItem("photos")}>
+            {content.photos.map((item, index) => (
+              <RepeatCard
+                key={`photo-${index}`}
+                onRemove={() => removeItem("photos", index)}
+              >
+                <div className="field-row">
+                  <TextField
+                    label="title / alt text"
+                    value={item.title}
+                    onChange={(value) =>
+                      updateItem("photos", index, "title", value)
+                    }
+                  />
+                  <TextField
+                    label="caption"
+                    value={item.caption}
+                    onChange={(value) =>
+                      updateItem("photos", index, "caption", value)
+                    }
+                  />
+                </div>
+                <TextField
+                  label="image url"
+                  value={item.url}
+                  onChange={(value) =>
+                    updateItem("photos", index, "url", value)
+                  }
+                />
                 <div className="upload-row">
-                  <span className="editor-notice">URL or direct upload</span>
+                  <span className="editor-notice">url or direct upload</span>
                   <label className="file-label">
-                    {uploading === `photo-${index}` ? "Uploading…" : "Upload image"}
+                    {uploading === `photo-${index}` ? "uploading…" : "upload image"}
                     <input
                       type="file"
                       accept="image/jpeg,image/png,image/webp,image/gif"
@@ -227,77 +412,76 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
             ))}
           </RepeatSection>
 
-          <RepeatSection title="Videos" onAdd={() => addItem("videos")}>
-            {content.videos.map((item, index) => (
-              <RepeatCard key={`video-${index}`} onRemove={() => removeItem("videos", index)}>
+          <RepeatSection title="awards" onAdd={() => addItem("awards")}>
+            {content.awards.map((item, index) => (
+              <RepeatCard
+                key={`award-${index}`}
+                onRemove={() => removeItem("awards", index)}
+              >
                 <div className="field-row">
-                  <TextField label="Title" value={item.title} onChange={(v) => updateItem("videos", index, "title", v)} />
-                  <TextField label="Year" value={item.year} onChange={(v) => updateItem("videos", index, "year", v)} />
+                  <TextField
+                    label="award"
+                    value={item.title}
+                    onChange={(value) =>
+                      updateItem("awards", index, "title", value)
+                    }
+                  />
+                  <TextField
+                    label="year"
+                    value={item.year}
+                    onChange={(value) =>
+                      updateItem("awards", index, "year", value)
+                    }
+                  />
                 </div>
-                <TextField label="YouTube or Vimeo URL" value={item.url} onChange={(v) => updateItem("videos", index, "url", v)} />
               </RepeatCard>
             ))}
           </RepeatSection>
 
-          <EditorSection title="Résumé introduction">
-            <TextArea label="Professional summary" value={content.resumeSummary} onChange={(v) => updateField("resumeSummary", v)} />
-            <TextField label="Résumé PDF URL" value={content.resumeUrl} onChange={(v) => updateField("resumeUrl", v)} />
-          </EditorSection>
-
-          <ResumeEditor
-            title="Experience"
-            entries={content.experience}
-            arrayKey="experience"
-            onAdd={() => addItem("experience")}
-            updateItem={updateItem}
-            removeItem={removeItem}
-          />
-          <ResumeEditor
-            title="Education"
-            entries={content.education}
-            arrayKey="education"
-            onAdd={() => addItem("education")}
-            updateItem={updateItem}
-            removeItem={removeItem}
-          />
-
           <section className="editor-section">
-            <button className="tiny-button" type="button" onClick={resetDraft}>
-              Restore example content
+            <button
+              className="tiny-button"
+              type="button"
+              onClick={() => {
+                setContent(defaultContent);
+                setState("Starter content restored — not yet published");
+              }}
+            >
+              restore starter content
             </button>
           </section>
         </section>
 
         <aside className="preview-panel">
           <div className="preview-chrome">
-            <span><span className="preview-dot" />Live preview</span>
-            <span>Home</span>
+            <span>
+              <span className="preview-dot" />
+              live preview
+            </span>
+            <span>{content.defaultTab}</span>
           </div>
           <div className="preview-canvas">
-            <div className="preview-mini-header">
-              <strong>{content.name || "Your name"}</strong>
-              <div className="preview-mini-nav">
-                <span>Index</span>
-                <span>Projects</span>
-                <span>Photos</span>
-                <span>Videos</span>
-                <span>Résumé</span>
-              </div>
-              <span>◐</span>
-            </div>
-            <section className="preview-mini-hero">
-              <p>{content.eyebrow}</p>
-              <h2>{content.headline || "Your headline"}</h2>
-              <p>{content.intro}</p>
-            </section>
-            <div className="preview-mini-projects">
-              {content.projects.slice(0, 4).map((project, index) => (
-                <div className="preview-mini-project" key={`preview-${index}`}>
-                  <span>{String(index + 1).padStart(2, "0")}</span>
-                  <span>{project.title}</span>
-                  <span>{project.year}</span>
-                </div>
-              ))}
+            <div className="preview-index">
+              <section>
+                <h2>{content.greeting || "hi there!"}</h2>
+                <p>{content.bio}</p>
+                <ul>
+                  {content.facts.map((fact, index) => (
+                    <li key={`preview-fact-${index}`}>- {fact}</li>
+                  ))}
+                </ul>
+                <div className="preview-socials">@ &nbsp; ◎ &nbsp; ▶ &nbsp; in &nbsp; git</div>
+              </section>
+              <section className="preview-tabs">
+                <nav>
+                  {tabIds.map((tab) => (
+                    <span key={tab}>
+                      {content.defaultTab === tab ? "→" : "·"} {tab}
+                    </span>
+                  ))}
+                </nav>
+                <p>nothing here yet.</p>
+              </section>
             </div>
           </div>
         </aside>
@@ -306,10 +490,18 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
   );
 }
 
-function EditorSection({ title, children }: { title: string; children: React.ReactNode }) {
+function EditorSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <section className="editor-section">
-      <div className="editor-section-header"><h2>{title}</h2></div>
+      <div className="editor-section-header">
+        <h2>{title}</h2>
+      </div>
       {children}
     </section>
   );
@@ -328,20 +520,30 @@ function RepeatSection({
     <section className="editor-section">
       <div className="editor-section-header">
         <h2>{title}</h2>
-        <button className="tiny-button" type="button" onClick={onAdd}>+ Add</button>
+        <button className="tiny-button" type="button" onClick={onAdd}>
+          + add
+        </button>
       </div>
       {children}
     </section>
   );
 }
 
-function RepeatCard({ onRemove, children }: { onRemove: () => void; children: React.ReactNode }) {
+function RepeatCard({
+  onRemove,
+  children,
+}: {
+  onRemove: () => void;
+  children: React.ReactNode;
+}) {
   return (
     <div className="repeat-card">
       {children}
       <div className="upload-row">
         <span />
-        <button className="tiny-button" type="button" onClick={onRemove}>Remove</button>
+        <button className="tiny-button" type="button" onClick={onRemove}>
+          remove
+        </button>
       </div>
     </div>
   );
@@ -379,37 +581,96 @@ function TextArea({
     <div className="field">
       <label>
         {label}
-        <textarea value={value} onChange={(event) => onChange(event.target.value)} />
+        <textarea
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+        />
       </label>
     </div>
   );
 }
 
-function ResumeEditor({
-  title,
+function SelectField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: TabId;
+  onChange: (value: TabId) => void;
+}) {
+  return (
+    <div className="field">
+      <label>
+        {label}
+        <select
+          value={value}
+          onChange={(event) => onChange(event.target.value as TabId)}
+        >
+          {tabIds.map((tab) => (
+            <option key={tab} value={tab}>
+              {tab}
+            </option>
+          ))}
+        </select>
+      </label>
+    </div>
+  );
+}
+
+function ExperienceEditor({
   entries,
-  arrayKey,
   onAdd,
   updateItem,
   removeItem,
 }: {
-  title: string;
   entries: ResumeEntry[];
-  arrayKey: "experience" | "education";
   onAdd: () => void;
-  updateItem: (key: ArrayKey, index: number, field: string, value: string) => void;
+  updateItem: (
+    key: ArrayKey,
+    index: number,
+    field: string,
+    value: string,
+  ) => void;
   removeItem: (key: ArrayKey, index: number) => void;
 }) {
   return (
-    <RepeatSection title={title} onAdd={onAdd}>
+    <RepeatSection title="experience" onAdd={onAdd}>
       {entries.map((item, index) => (
-        <RepeatCard key={`${arrayKey}-${index}`} onRemove={() => removeItem(arrayKey, index)}>
+        <RepeatCard
+          key={`experience-${index}`}
+          onRemove={() => removeItem("experience", index)}
+        >
           <div className="field-row">
-            <TextField label="Role / program" value={item.title} onChange={(v) => updateItem(arrayKey, index, "title", v)} />
-            <TextField label="Organization" value={item.organization} onChange={(v) => updateItem(arrayKey, index, "organization", v)} />
+            <TextField
+              label="role"
+              value={item.title}
+              onChange={(value) =>
+                updateItem("experience", index, "title", value)
+              }
+            />
+            <TextField
+              label="organization"
+              value={item.organization}
+              onChange={(value) =>
+                updateItem("experience", index, "organization", value)
+              }
+            />
           </div>
-          <TextField label="Dates" value={item.period} onChange={(v) => updateItem(arrayKey, index, "period", v)} />
-          <TextArea label="Description" value={item.description} onChange={(v) => updateItem(arrayKey, index, "description", v)} />
+          <TextField
+            label="dates"
+            value={item.period}
+            onChange={(value) =>
+              updateItem("experience", index, "period", value)
+            }
+          />
+          <TextArea
+            label="description"
+            value={item.description}
+            onChange={(value) =>
+              updateItem("experience", index, "description", value)
+            }
+          />
         </RepeatCard>
       ))}
     </RepeatSection>

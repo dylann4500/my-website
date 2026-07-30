@@ -1,17 +1,6 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import { headers } from "next/headers";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();
@@ -24,18 +13,18 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     metadataBase: new URL(origin),
     title: {
-      default: "Dylan — Independent Creative",
+      default: "Dylan",
       template: "%s — Dylan",
     },
     description:
-      "A minimal portfolio of selected projects, photographs, films, and experience.",
+      "Dylan studies data science and applied mathematics at UC Berkeley.",
     icons: {
       icon: "/favicon.svg",
       shortcut: "/favicon.svg",
     },
     openGraph: {
-      title: "Dylan — Independent Creative",
-      description: "Images, motion, and digital ideas.",
+      title: "Dylan",
+      description: "Data science + applied math at UC Berkeley.",
       url: origin,
       type: "website",
       images: [
@@ -43,14 +32,14 @@ export async function generateMetadata(): Promise<Metadata> {
           url: `${origin}/og.png`,
           width: 1730,
           height: 909,
-          alt: "Dylan — Images, motion, and digital ideas.",
+          alt: "Dylan — data science + applied math at UC Berkeley.",
         },
       ],
     },
     twitter: {
       card: "summary_large_image",
-      title: "Dylan — Independent Creative",
-      description: "Images, motion, and digital ideas.",
+      title: "Dylan",
+      description: "Data science + applied math at UC Berkeley.",
       images: [`${origin}/og.png`],
     },
   };
@@ -63,9 +52,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
