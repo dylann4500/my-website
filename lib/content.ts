@@ -247,7 +247,7 @@ function endDateValue(value: string) {
 
   const matches = [
     ...normalized.matchAll(
-      /\b(?:(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\s+)?((?:19|20)\d{2})\b/g,
+      /\b(?:(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\s+(?:(\d{1,2})(?:st|nd|rd|th)?(?:,\s*|\s+))?)?((?:19|20)\d{2})\b/g,
     ),
   ];
   const match = matches.at(-1);
@@ -255,7 +255,8 @@ function endDateValue(value: string) {
 
   const monthKey = match[1] === "sept" ? "sep" : match[1];
   const month = monthKey ? monthNumbers[monthKey] : 11;
-  return Date.UTC(Number(match[2]), month, 1);
+  const day = match[2] ? Number(match[2]) : monthKey ? 1 : 31;
+  return Date.UTC(Number(match[3]), month, day);
 }
 
 function compareDatesDescending(first: string, second: string) {
@@ -274,6 +275,12 @@ export function sortExperienceEntries(entries: ResumeEntry[]) {
 export function sortAwards(entries: Award[]) {
   return [...entries].sort((first, second) =>
     compareDatesDescending(first.year, second.year),
+  );
+}
+
+export function sortPhotos(entries: Photo[]) {
+  return [...entries].sort((first, second) =>
+    compareDatesDescending(first.date, second.date),
   );
 }
 
@@ -385,7 +392,7 @@ export function sanitizeContent(value: unknown): SiteContent {
       : cleanString(candidate.email, defaultContent.email),
     socials,
     projects,
-    photos,
+    photos: sortPhotos(photos),
     videos,
     experience: sortExperienceEntries(
       needsPortfolioContentUpdate

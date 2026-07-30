@@ -7,6 +7,7 @@ import {
   defaultContent,
   sortAwards,
   sortExperienceEntries,
+  sortPhotos,
   tabIds,
   type Award,
   type Photo,
@@ -95,17 +96,23 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
       ...value,
       experience: sortExperienceEntries(value.experience),
       awards: sortAwards(value.awards),
+      photos: sortPhotos(value.photos),
     };
   }
 
-  function sortDatedSection(key: "experience" | "awards") {
-    setContent((current) => ({
-      ...current,
-      [key]:
-        key === "experience"
-          ? sortExperienceEntries(current.experience)
-          : sortAwards(current.awards),
-    }));
+  function sortDatedSection(key: "experience" | "awards" | "photos") {
+    setContent((current) => {
+      if (key === "experience") {
+        return {
+          ...current,
+          experience: sortExperienceEntries(current.experience),
+        };
+      }
+      if (key === "awards") {
+        return { ...current, awards: sortAwards(current.awards) };
+      }
+      return { ...current, photos: sortPhotos(current.photos) };
+    });
   }
 
   function updateFact(index: number, value: string) {
@@ -515,7 +522,8 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
             <div className="gallery-batch-row">
               <p className="section-note">
                 Upload several photos at once, then add a title, date, and
-                description to each.
+                description to each. Photos sort newest first after you leave
+                the date field; use dates like “Jul 30 2026”.
               </p>
               <label className="file-label">
                 {uploading === "photo-batch"
@@ -549,6 +557,7 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
                     onChange={(value) =>
                       updateItem("photos", index, "date", value)
                     }
+                    onBlur={() => sortDatedSection("photos")}
                   />
                 </div>
                 <TextArea
