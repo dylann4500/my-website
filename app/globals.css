@@ -118,8 +118,8 @@ select:focus-visible,
 
 .bio-copy {
   max-width: 36ch;
-  margin: 0 0 22px;
-  color: var(--muted);
+  margin: 0 0 28px;
+  color: var(--text);
   font-size: 15px;
 }
 
@@ -133,8 +133,16 @@ select:focus-visible,
 
 .fact-list li {
   position: relative;
-  margin: 10px 0;
+  margin: 8px 0;
   padding-left: 15px;
+}
+
+.fact-list li:first-child {
+  margin-top: 0;
+}
+
+.fact-list li:last-child {
+  margin-bottom: 0;
 }
 
 .fact-list li::before {
@@ -147,7 +155,7 @@ select:focus-visible,
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
-  margin-top: 54px;
+  margin-top: 28px;
 }
 
 .social-button {

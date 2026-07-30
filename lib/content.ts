@@ -45,7 +45,7 @@ export type Award = {
 };
 
 export type SiteContent = {
-  designVersion: 3;
+  designVersion: 4;
   name: string;
   greeting: string;
   bio: string;
@@ -71,10 +71,10 @@ export type SiteContent = {
 };
 
 export const defaultContent: SiteContent = {
-  designVersion: 3,
+  designVersion: 4,
   name: "Dylan",
   greeting: "hi there!",
-  bio: "i'm dylan, a student at uc berkeley studying ds + applied math. i'm currently quite into hiking, videography, scriabin, and ml. here are some fun facts!",
+  bio: "i'm dylan, a student at uc berkeley studying ds + applied math. currently into hiking, videography, scriabin, and ml. here are some fun facts!",
   facts: [
     "once performed violin for the U.S. Secret Service",
     "top 0.1% fastest typists worldwide",
@@ -83,12 +83,15 @@ export const defaultContent: SiteContent = {
     "learning some photography on my nikon d610",
   ],
   defaultTab: "experience",
-  email: "hello@example.com",
+  email: "nguyennalyd3@gmail.com",
   socials: [
-    { label: "Instagram", url: "" },
-    { label: "YouTube", url: "" },
-    { label: "LinkedIn", url: "" },
-    { label: "GitHub", url: "" },
+    { label: "Instagram", url: "https://www.instagram.com/nnguyen.dylann/" },
+    { label: "YouTube", url: "https://www.youtube.com/@DylanNguyenn" },
+    {
+      label: "LinkedIn",
+      url: "https://www.linkedin.com/in/dylan-nguyen-b765482a8/",
+    },
+    { label: "GitHub", url: "https://github.com/dylann4500" },
   ],
   projects: [],
   photos: [],
@@ -129,12 +132,19 @@ export function sanitizeContent(value: unknown): SiteContent {
         })
       : {};
 
-  if (candidate.designVersion !== 2 && candidate.designVersion !== 3) {
+  if (
+    candidate.designVersion !== 2 &&
+    candidate.designVersion !== 3 &&
+    candidate.designVersion !== 4
+  ) {
     return defaultContent;
   }
   const isVersionTwo = candidate.designVersion === 2;
+  const needsProfileUpdate = candidate.designVersion < 4;
 
-  const socials = Array.isArray(candidate.socials)
+  const socials = needsProfileUpdate
+    ? defaultContent.socials
+    : Array.isArray(candidate.socials)
     ? candidate.socials.slice(0, 12).map((item) => ({
         label: cleanString(item?.label),
         url: cleanUrl(item?.url),
@@ -197,15 +207,17 @@ export function sanitizeContent(value: unknown): SiteContent {
     : defaultContent.defaultTab;
 
   return {
-    designVersion: 3,
+    designVersion: 4,
     name: cleanString(candidate.name, defaultContent.name),
     greeting: cleanString(candidate.greeting, defaultContent.greeting),
-    bio: isVersionTwo
+    bio: needsProfileUpdate
       ? defaultContent.bio
       : cleanString(candidate.bio, defaultContent.bio),
     facts,
     defaultTab,
-    email: cleanString(candidate.email, defaultContent.email),
+    email: needsProfileUpdate
+      ? defaultContent.email
+      : cleanString(candidate.email, defaultContent.email),
     socials,
     projects,
     photos,
