@@ -348,26 +348,21 @@ function TabContent({
           </div>
           {award.description && <p>{award.description}</p>}
           {award.details && (
-            <details className="award-details">
-              <summary>
-                {award.title === "Science Olympiad" ? "results" : "placements"}
-              </summary>
-              <div>
-                {award.details.split("\n\n").map((group) => {
-                  const [heading, ...items] = group.split("\n");
-                  return (
-                    <section key={heading}>
-                      <strong>{heading}</strong>
-                      <ul>
-                        {items.map((item) => (
-                          <li key={item}>{item}</li>
-                        ))}
-                      </ul>
-                    </section>
-                  );
-                })}
-              </div>
-            </details>
+            <div className="award-results">
+              {award.details.split("\n\n").map((group) => {
+                const [heading, ...items] = group.split("\n");
+                return (
+                  <section key={heading}>
+                    <strong>{heading}</strong>
+                    <ul>
+                      {items.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </section>
+                );
+              })}
+            </div>
           )}
         </article>
       ))}

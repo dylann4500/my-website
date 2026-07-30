@@ -442,7 +442,7 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
                   }
                 />
                 <TextArea
-                  label="collapsible details (optional)"
+                  label="additional results (optional)"
                   value={item.details}
                   onChange={(value) =>
                     updateItem("awards", index, "details", value)
