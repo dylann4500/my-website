@@ -45,7 +45,7 @@ export type Award = {
 };
 
 export type SiteContent = {
-  designVersion: 4;
+  designVersion: 5;
   name: string;
   greeting: string;
   bio: string;
@@ -71,7 +71,7 @@ export type SiteContent = {
 };
 
 export const defaultContent: SiteContent = {
-  designVersion: 4,
+  designVersion: 5,
   name: "Dylan",
   greeting: "hi there!",
   bio: "i'm dylan, a student at uc berkeley studying ds + applied math. currently into hiking, videography, scriabin, and ml. here are some fun facts!",
@@ -135,12 +135,13 @@ export function sanitizeContent(value: unknown): SiteContent {
   if (
     candidate.designVersion !== 2 &&
     candidate.designVersion !== 3 &&
-    candidate.designVersion !== 4
+    candidate.designVersion !== 4 &&
+    candidate.designVersion !== 5
   ) {
     return defaultContent;
   }
   const isVersionTwo = candidate.designVersion === 2;
-  const needsProfileUpdate = candidate.designVersion < 4;
+  const needsProfileUpdate = candidate.designVersion < 5;
 
   const socials = needsProfileUpdate
     ? defaultContent.socials
@@ -193,7 +194,7 @@ export function sanitizeContent(value: unknown): SiteContent {
       }))
     : [];
 
-  const facts = isVersionTwo
+  const facts = isVersionTwo || needsProfileUpdate
     ? defaultContent.facts
     : Array.isArray(candidate.facts)
     ? candidate.facts
@@ -207,7 +208,7 @@ export function sanitizeContent(value: unknown): SiteContent {
     : defaultContent.defaultTab;
 
   return {
-    designVersion: 4,
+    designVersion: 5,
     name: cleanString(candidate.name, defaultContent.name),
     greeting: cleanString(candidate.greeting, defaultContent.greeting),
     bio: needsProfileUpdate

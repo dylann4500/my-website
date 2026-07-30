@@ -32,6 +32,15 @@ const socialIcons: Record<string, string> = {
   github: "/icons/github.svg",
 };
 
+const socialFallbacks: Record<string, string> = {
+  instagram: "https://www.instagram.com/nnguyen.dylann/",
+  youtube: "https://www.youtube.com/@DylanNguyenn",
+  linkedin: "https://www.linkedin.com/in/dylan-nguyen-b765482a8/",
+  github: "https://github.com/dylann4500",
+};
+
+const emailFallback = "nguyennalyd3@gmail.com";
+
 export function PortfolioFrame({
   active,
   content,
@@ -107,7 +116,7 @@ export function PortfolioFrame({
           <nav className="social-row" aria-label="Social links">
             <a
               className="social-button"
-              href={`mailto:${content.email}`}
+              href={`mailto:${content.email || emailFallback}`}
               aria-label="Email"
               title="Email"
             >
@@ -115,17 +124,18 @@ export function PortfolioFrame({
             </a>
             {content.socials.map((social, index) => {
               const key = social.label.toLowerCase();
+              const url = social.url || socialFallbacks[key] || "";
               return (
                 <a
                   className="social-button"
-                  href={social.url || "#"}
+                  href={url || "#"}
                   key={`${social.label}-${index}`}
                   aria-label={social.label}
                   title={social.label}
-                  target={social.url ? "_blank" : undefined}
-                  rel={social.url ? "noreferrer" : undefined}
+                  target={url ? "_blank" : undefined}
+                  rel={url ? "noreferrer" : undefined}
                   onClick={(event) => {
-                    if (!social.url) event.preventDefault();
+                    if (!url) event.preventDefault();
                   }}
                 >
                   {socialIcons[key] ? (
