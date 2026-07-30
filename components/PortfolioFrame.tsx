@@ -25,11 +25,11 @@ const pageTab: Record<PageName, TabId | null> = {
   resume: "experience",
 };
 
-const socialMarks: Record<string, string> = {
-  instagram: "◎",
-  youtube: "▶",
-  linkedin: "in",
-  github: "git",
+const socialIcons: Record<string, string> = {
+  instagram: "/icons/instagram.svg",
+  youtube: "/icons/youtube.svg",
+  linkedin: "/icons/linkedin.svg",
+  github: "/icons/github.svg",
 };
 
 export function PortfolioFrame({
@@ -111,7 +111,7 @@ export function PortfolioFrame({
               aria-label="Email"
               title="Email"
             >
-              @
+              <img src="/icons/gmail.svg" alt="" aria-hidden="true" />
             </a>
             {content.socials.map((social, index) => {
               const key = social.label.toLowerCase();
@@ -128,7 +128,11 @@ export function PortfolioFrame({
                     if (!social.url) event.preventDefault();
                   }}
                 >
-                  {socialMarks[key] ?? social.label.slice(0, 2).toLowerCase()}
+                  {socialIcons[key] ? (
+                    <img src={socialIcons[key]} alt="" aria-hidden="true" />
+                  ) : (
+                    social.label.slice(0, 2).toLowerCase()
+                  )}
                 </a>
               );
             })}

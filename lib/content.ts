@@ -45,7 +45,7 @@ export type Award = {
 };
 
 export type SiteContent = {
-  designVersion: 2;
+  designVersion: 3;
   name: string;
   greeting: string;
   bio: string;
@@ -71,15 +71,16 @@ export type SiteContent = {
 };
 
 export const defaultContent: SiteContent = {
-  designVersion: 2,
+  designVersion: 3,
   name: "Dylan",
   greeting: "hi there!",
-  bio: "i'm dylan, currently studying ds + applied math at uc berkeley. here are some fun facts:",
+  bio: "i'm dylan, a student at uc berkeley studying ds + applied math. i'm currently quite into hiking, videography, scriabin, and ml. here are some fun facts!",
   facts: [
-    "once performed violin for U.S. Secret Service",
+    "once performed violin for the U.S. Secret Service",
     "top 0.1% fastest typists worldwide",
     "hit 7.5 mil impressions on my first yt video",
-    "trying to learn photography on my nikon d610",
+    "ex-#1 nationwide cryptoquote solver",
+    "learning some photography on my nikon d610",
   ],
   defaultTab: "experience",
   email: "hello@example.com",
@@ -122,9 +123,16 @@ const cleanUrl = (value: unknown) => {
 
 export function sanitizeContent(value: unknown): SiteContent {
   const candidate =
-    value && typeof value === "object" ? (value as Partial<SiteContent>) : {};
+    value && typeof value === "object"
+      ? (value as Partial<Omit<SiteContent, "designVersion">> & {
+          designVersion?: number;
+        })
+      : {};
 
-  if (candidate.designVersion !== 2) return defaultContent;
+  if (candidate.designVersion !== 2 && candidate.designVersion !== 3) {
+    return defaultContent;
+  }
+  const isVersionTwo = candidate.designVersion === 2;
 
   const socials = Array.isArray(candidate.socials)
     ? candidate.socials.slice(0, 12).map((item) => ({
@@ -175,7 +183,9 @@ export function sanitizeContent(value: unknown): SiteContent {
       }))
     : [];
 
-  const facts = Array.isArray(candidate.facts)
+  const facts = isVersionTwo
+    ? defaultContent.facts
+    : Array.isArray(candidate.facts)
     ? candidate.facts
         .slice(0, 12)
         .map((fact) => cleanString(fact))
@@ -187,10 +197,12 @@ export function sanitizeContent(value: unknown): SiteContent {
     : defaultContent.defaultTab;
 
   return {
-    designVersion: 2,
+    designVersion: 3,
     name: cleanString(candidate.name, defaultContent.name),
     greeting: cleanString(candidate.greeting, defaultContent.greeting),
-    bio: cleanString(candidate.bio, defaultContent.bio),
+    bio: isVersionTwo
+      ? defaultContent.bio
+      : cleanString(candidate.bio, defaultContent.bio),
     facts,
     defaultTab,
     email: cleanString(candidate.email, defaultContent.email),
