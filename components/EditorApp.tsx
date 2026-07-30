@@ -36,7 +36,7 @@ const newItems: Record<
     period: "",
     description: "",
   },
-  awards: { title: "Award", year: "" },
+  awards: { title: "Award", year: "", description: "", details: "" },
 };
 
 export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
@@ -50,7 +50,7 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
     if (!draft) return;
     try {
       const parsed = JSON.parse(draft) as Partial<SiteContent>;
-      if (parsed.designVersion !== 6) {
+      if (parsed.designVersion !== 7) {
         window.localStorage.removeItem("portfolio-editor-draft");
         return;
       }
@@ -434,6 +434,20 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
                     }
                   />
                 </div>
+                <TextArea
+                  label="description"
+                  value={item.description}
+                  onChange={(value) =>
+                    updateItem("awards", index, "description", value)
+                  }
+                />
+                <TextArea
+                  label="collapsible details (optional)"
+                  value={item.details}
+                  onChange={(value) =>
+                    updateItem("awards", index, "details", value)
+                  }
+                />
               </RepeatCard>
             ))}
           </RepeatSection>

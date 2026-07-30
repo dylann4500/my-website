@@ -254,11 +254,17 @@ function TabContent({
         {content.experience.map((item, index) => (
           <article className="text-entry" key={`${item.title}-${index}`}>
             <div className="entry-heading">
-              <strong>{item.title}</strong>
+              <strong>{item.organization}</strong>
               <span>{item.period}</span>
             </div>
-            <p>{item.organization}</p>
-            {item.description && <p>{item.description}</p>}
+            <p className="entry-role">{item.title}</p>
+            {item.description && (
+              <ul className="entry-points">
+                {item.description.split("\n").filter(Boolean).map((point) => (
+                  <li key={point}>{point}</li>
+                ))}
+              </ul>
+            )}
           </article>
         ))}
       </div>
@@ -333,12 +339,37 @@ function TabContent({
 
   if (!content.awards.length) return <EmptyState />;
   return (
-    <div className="link-list">
+    <div className="award-list">
       {content.awards.map((award, index) => (
-        <div key={`${award.title}-${index}`}>
-          <span>{award.title}</span>
-          <span>{award.year}</span>
-        </div>
+        <article className="award-entry" key={`${award.title}-${index}`}>
+          <div className="entry-heading">
+            <strong>{award.title}</strong>
+            <span>{award.year}</span>
+          </div>
+          {award.description && <p>{award.description}</p>}
+          {award.details && (
+            <details className="award-details">
+              <summary>
+                {award.title === "Science Olympiad" ? "results" : "placements"}
+              </summary>
+              <div>
+                {award.details.split("\n\n").map((group) => {
+                  const [heading, ...items] = group.split("\n");
+                  return (
+                    <section key={heading}>
+                      <strong>{heading}</strong>
+                      <ul>
+                        {items.map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    </section>
+                  );
+                })}
+              </div>
+            </details>
+          )}
+        </article>
       ))}
     </div>
   );

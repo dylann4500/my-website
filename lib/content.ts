@@ -42,10 +42,12 @@ export type ResumeEntry = {
 export type Award = {
   title: string;
   year: string;
+  description: string;
+  details: string;
 };
 
 export type SiteContent = {
-  designVersion: 6;
+  designVersion: 7;
   name: string;
   greeting: string;
   bio: string;
@@ -71,7 +73,7 @@ export type SiteContent = {
 };
 
 export const defaultContent: SiteContent = {
-  designVersion: 6,
+  designVersion: 7,
   name: "Dylan",
   greeting: "hi there!",
   bio: "i'm dylan, a student at uc berkeley studying ds + applied math. currently into fish, videography, scriabin, and ml. here are some fun facts!",
@@ -96,8 +98,103 @@ export const defaultContent: SiteContent = {
   projects: [],
   photos: [],
   videos: [],
-  experience: [],
-  awards: [],
+  experience: [
+    {
+      title: "Researcher",
+      organization: "Aalto University",
+      period: "Feb 2026 – May 2026",
+      description:
+        "Collaborated with Dr. Mojtaba Barzehkar on offshore solar farm site selection in Danish waters combining ML frameworks (SVR, HGB, RF), GIS, and Multi-Criteria Decision Analysis.",
+    },
+    {
+      title: "Founder",
+      organization: "Vocalis",
+      period: "Nov 2024 – Jan 2026",
+      description:
+        "Built gen-AI powered augmentative alternative communication (AAC) platform allowing nonverbal and deaf individuals to communicate; 2–5x faster communication rates compared to leading AAC market solutions.\nReceived $5,000+ funding from Samsung; awards won from Solve for Tomorrow contest and Diamond Challenge.",
+    },
+    {
+      title: "Payload Technologies Intern",
+      organization: "Boeing",
+      period: "Jun 2025 – Aug 2025",
+      description:
+        "Worked on edge-AI wildfire classification in autonomous detection drones using PyTorch-trained YOLO + CNN models; for Project WDOS, a drone-based wildfire prevention initiative deploying across four continents.\nAuthored a 3-volume, 58-page technical report and poster, earning formal project distinction from the California State Senate (presented by Senator Tony Strickland).",
+    },
+    {
+      title: "Researcher",
+      organization: "California State University, Long Beach",
+      period: "Dec 2024 – Jun 2025",
+      description:
+        "Developed and published a novel two-step CNN-based pipeline for robust estimations of residential PV capacity.\nDelivered invited lectures on CNN theory and project methodology for Prof. Olga Korosteleva's graduate courses within the Department of Mathematics and Statistics.",
+    },
+  ],
+  awards: [
+    {
+      title: "YCombinator Startup School",
+      year: "Jul 2026",
+      description:
+        "Received $27,200+ in compute credit; flown to San Francisco to hear from speakers including Sam Altman, Jensen Huang, and Jeff Dean.",
+      details: "",
+    },
+    {
+      title: "Hanson Scholar",
+      year: "May 2026",
+      description: "1 of 8 selected for a $2,000 scholarship.",
+      details: "",
+    },
+    {
+      title: "Science Olympiad",
+      year: "2025–2026",
+      description: "",
+      details:
+        "Robot Tour:\n1st Place of 353 teams @ Rickards Invitational\n4th Place of 300 teams @ Boyceville Invitational\n2nd Place of 90 teams @ USC Invitational\n3rd Place of 88 teams @ Highlands Invitational\n6th Place of 47 teams @ UCI Regionals\n4th Place of 43 teams @ UCR Invitational\n\nExperimental Design:\n2nd Place of 88 teams @ Highlands Invitational\n3rd Place of 47 teams @ UCI Regionals (2026)\n5th Place of 47 teams @ UCI Regionals (2025)\n\nCodebusters:\n9th Place of 353 teams @ Rickards Invitational\n5th Place of 43 teams @ UCR Invitational\n\nMachines:\n6th Place of 47 teams @ UCI Regionals",
+    },
+    {
+      title: "Solve for Tomorrow 2026 Finalist",
+      year: "Jan 2026",
+      description: "$1,000 prize winner + $2,000 sponsor match.",
+      details: "",
+    },
+    {
+      title: "Southern California Math Competition 2nd Place",
+      year: "Mar 2025",
+      description: "139 participants, lost to IMO gold rip.",
+      details: "",
+    },
+    {
+      title: "Diamond Challenge Global Semifinalist",
+      year: "Feb 2025",
+      description: "Top 7% of submissions worldwide.",
+      details: "",
+    },
+    {
+      title: "Solve for Tomorrow 2025 Finalist",
+      year: "Jan 2025",
+      description: "$2,500 prize winner.",
+      details: "",
+    },
+    {
+      title: "Smurf's Village Annual Smurfberry Event T50",
+      year: "Dec 2024",
+      description:
+        "Finished #50 of 200,000+ in the annual Smurfberry Festival with a mathematically optimized village layout.",
+      details: "",
+    },
+    {
+      title: "Southwestern Youth Music Festival",
+      year: "2022–2024",
+      description: "",
+      details:
+        "2022:\n3rd Place in Violin, Romantic Period: Open Category\n\n2023:\n1st Place in Violin, Romantic Period: Open Category ($100 Prize)\n4th Place in Violin, Baroque Period: Open Category\n\n2024:\n4th Place in Violin, Romantic Period: Open Category",
+    },
+    {
+      title: "Certificate of Merit Violin Level 10",
+      year: "Feb 2024",
+      description:
+        "Highest distinction (<5% of CA violinists). Received 8x State Honors + 3x State Convention Invitee across 8 years.",
+      details: "",
+    },
+  ],
   eyebrow: "",
   headline: "",
   intro: "",
@@ -137,12 +234,14 @@ export function sanitizeContent(value: unknown): SiteContent {
     candidate.designVersion !== 3 &&
     candidate.designVersion !== 4 &&
     candidate.designVersion !== 5 &&
-    candidate.designVersion !== 6
+    candidate.designVersion !== 6 &&
+    candidate.designVersion !== 7
   ) {
     return defaultContent;
   }
   const isVersionTwo = candidate.designVersion === 2;
   const needsProfileUpdate = candidate.designVersion < 6;
+  const needsPortfolioContentUpdate = candidate.designVersion < 7;
 
   const socials = needsProfileUpdate
     ? defaultContent.socials
@@ -192,6 +291,8 @@ export function sanitizeContent(value: unknown): SiteContent {
     ? candidate.awards.slice(0, 30).map((item) => ({
         title: cleanString(item?.title),
         year: cleanString(item?.year),
+        description: cleanString(item?.description),
+        details: cleanString(item?.details),
       }))
     : [];
 
@@ -209,7 +310,7 @@ export function sanitizeContent(value: unknown): SiteContent {
     : defaultContent.defaultTab;
 
   return {
-    designVersion: 6,
+    designVersion: 7,
     name: cleanString(candidate.name, defaultContent.name),
     greeting: cleanString(candidate.greeting, defaultContent.greeting),
     bio: needsProfileUpdate
@@ -224,8 +325,10 @@ export function sanitizeContent(value: unknown): SiteContent {
     projects,
     photos,
     videos,
-    experience: cleanEntries(candidate.experience),
-    awards,
+    experience: needsPortfolioContentUpdate
+      ? defaultContent.experience
+      : cleanEntries(candidate.experience),
+    awards: needsPortfolioContentUpdate ? defaultContent.awards : awards,
     eyebrow: cleanString(candidate.eyebrow),
     headline: cleanString(candidate.headline),
     intro: cleanString(candidate.intro),
