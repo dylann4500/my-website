@@ -1,9 +1,9 @@
 export const tabIds = [
   "experience",
+  "awards",
   "projects",
   "videos",
   "gallery",
-  "awards",
 ] as const;
 
 export type TabId = (typeof tabIds)[number];
