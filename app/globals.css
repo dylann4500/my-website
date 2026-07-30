@@ -449,7 +449,8 @@ select:focus-visible,
 
 .gallery-lightbox-card {
   position: relative;
-  width: min(900px, 100%);
+  width: fit-content;
+  max-width: min(760px, 100%);
   max-height: calc(100svh - 48px);
   overflow-y: auto;
   padding: 8px;
@@ -459,8 +460,10 @@ select:focus-visible,
 
 .gallery-lightbox-card > img {
   display: block;
-  width: 100%;
-  max-height: 72svh;
+  width: auto;
+  max-width: 100%;
+  max-height: 68svh;
+  margin: 0 auto;
   object-fit: contain;
   background: var(--soft);
 }
@@ -483,7 +486,23 @@ select:focus-visible,
 }
 
 .gallery-meta {
+  min-width: min(320px, calc(100vw - 80px));
   padding: 14px 8px 8px;
+}
+
+.gallery-meta .entry-heading {
+  align-items: flex-start;
+}
+
+.gallery-meta .entry-heading strong {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow-wrap: anywhere;
+}
+
+.gallery-meta .entry-heading span {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .gallery-meta p {

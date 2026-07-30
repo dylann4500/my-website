@@ -202,12 +202,27 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
   }
 
   async function uploadImage(file: File) {
+    const preparedFile = await prepareImageForUpload(file);
     const body = new FormData();
-    body.append("file", file);
+    body.append("file", preparedFile);
     const response = await fetch("/api/media", { method: "POST", body });
-    const result = (await response.json()) as { url?: string; error?: string };
+    const responseText = await response.text();
+    let result: { url?: string; error?: string } = {};
+    try {
+      result = JSON.parse(responseText) as {
+        url?: string;
+        error?: string;
+      };
+    } catch {
+      // Platform-level size errors may return HTML instead of JSON.
+    }
     if (!response.ok || !result.url) {
-      throw new Error(result.error || "Upload failed");
+      throw new Error(
+        result.error ||
+          (response.status === 413
+            ? "The optimized image is still too large to upload."
+            : "Upload failed"),
+      );
     }
     return result.url;
   }
@@ -639,6 +654,54 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
       </div>
     </main>
   );
+}
+
+const MAX_UPLOAD_BYTES = 1.8 * 1024 * 1024;
+const MAX_IMAGE_EDGE = 2200;
+
+async function prepareImageForUpload(file: File) {
+  if (file.size <= MAX_UPLOAD_BYTES) return file;
+
+  const bitmap = await createImageBitmap(file, {
+    imageOrientation: "from-image",
+  });
+  let scale = Math.min(
+    1,
+    MAX_IMAGE_EDGE / Math.max(bitmap.width, bitmap.height),
+  );
+  let quality = 0.84;
+  let output: Blob | null = null;
+
+  try {
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("This browser could not prepare the image.");
+      context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+
+      output = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob(resolve, "image/webp", quality);
+      });
+      if (output && output.size <= MAX_UPLOAD_BYTES) break;
+
+      scale *= 0.82;
+      quality = Math.max(0.58, quality - 0.07);
+    }
+  } finally {
+    bitmap.close();
+  }
+
+  if (!output || output.size > MAX_UPLOAD_BYTES) {
+    throw new Error("This image could not be reduced enough to upload.");
+  }
+
+  const baseName = file.name.replace(/\.[^.]+$/, "") || "photo";
+  return new File([output], `${baseName}.webp`, {
+    type: "image/webp",
+    lastModified: file.lastModified,
+  });
 }
 
 function EditorSection({
