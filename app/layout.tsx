@@ -29,7 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
       type: "website",
       images: [
         {
-          url: `${origin}/og.png`,
+          url: `${origin}/og-sections-v2.png`,
           width: 1730,
           height: 909,
           alt: "Dylan — data science + applied math at UC Berkeley.",
@@ -40,7 +40,7 @@ export async function generateMetadata(): Promise<Metadata> {
       card: "summary_large_image",
       title: "Dylan",
       description: "Data science + applied math at UC Berkeley.",
-      images: [`${origin}/og.png`],
+      images: [`${origin}/og-sections-v2.png`],
     },
   };
 }
