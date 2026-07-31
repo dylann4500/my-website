@@ -27,11 +27,15 @@ html[data-theme="dark"] {
 html {
   background: var(--bg);
   color: var(--text);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
   min-height: 100vh;
+  min-height: 100svh;
   margin: 0;
+  overflow-x: hidden;
   background: var(--bg);
   color: var(--text);
   font-family: "Helvetica Neue", Helvetica, "Nimbus Sans L", sans-serif;
@@ -1005,10 +1009,14 @@ select:focus-visible,
   margin: 4px 0 0;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 920px) {
   .personal-page {
     display: block;
-    padding: 24px 16px;
+    padding:
+      max(24px, env(safe-area-inset-top))
+      max(16px, env(safe-area-inset-right))
+      max(32px, env(safe-area-inset-bottom))
+      max(16px, env(safe-area-inset-left));
   }
 
   .personal-index {
@@ -1018,29 +1026,49 @@ select:focus-visible,
   }
 
   .intro-column {
-    min-height: 450px;
-    padding: 60px 38px 42px 0;
+    min-height: 0;
+    padding: 54px 44px 36px 0;
     border-right: 0;
     border-bottom: 0;
   }
 
+  .social-row {
+    gap: 0;
+    margin-top: 22px;
+  }
+
+  .social-button {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+  }
+
   .content-column {
     grid-template-columns: 1fr;
-    gap: 34px;
+    gap: 24px;
     overflow: visible;
-    padding: 40px 0 48px;
+    padding: 32px 0 16px;
   }
 
   .tab-list {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 10px 20px;
+    gap: 0 8px;
+    padding-top: 0;
+  }
+
+  .tab-button {
+    width: 100%;
+    min-height: 44px;
+    align-items: center;
   }
 
   .tab-panel {
-    height: min(420px, 60svh);
-    min-height: 220px;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
     padding: 0;
+    overflow-wrap: anywhere;
   }
 
   .video-entry {
@@ -1048,7 +1076,50 @@ select:focus-visible,
   }
 
   .mode-button {
-    top: 12px;
+    top: 0;
+    right: 0;
+    width: 44px;
+    height: 44px;
+  }
+
+  .entry-heading {
+    align-items: flex-start;
+  }
+
+  .entry-heading strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .entry-heading span {
+    max-width: 45%;
+    flex: 0 0 auto;
+    text-align: right;
+  }
+
+  .gallery-lightbox {
+    padding:
+      max(12px, env(safe-area-inset-top))
+      max(12px, env(safe-area-inset-right))
+      max(12px, env(safe-area-inset-bottom))
+      max(12px, env(safe-area-inset-left));
+  }
+
+  .gallery-lightbox-card {
+    width: 100%;
+    max-height: calc(100svh - 24px);
+  }
+
+  .gallery-close {
+    top: 8px;
+    right: 8px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .gallery-meta {
+    width: 100%;
+    min-width: 0;
   }
 
   .editor-workspace {
