@@ -48,6 +48,13 @@ const socialFallbacks: Record<string, string> = {
 
 const emailFallback = "nguyennalyd3@gmail.com";
 
+const textSymbols = {
+  sun: "\u2600\uFE0E",
+  halfCircle: "\u25D0\uFE0E",
+  rightArrow: "\u2192\uFE0E",
+  externalArrow: "\u2197\uFE0E",
+};
+
 function youtubeVideoId(value: string) {
   try {
     const url = new URL(value);
@@ -125,7 +132,9 @@ export function PortfolioFrame({
           aria-label={`Switch to ${dark ? "light" : "dark"} mode`}
           title={`Switch to ${dark ? "light" : "dark"} mode`}
         >
-          {dark ? "☀" : "◐"}
+          <span className="ui-symbol" aria-hidden="true">
+            {dark ? textSymbols.sun : textSymbols.halfCircle}
+          </span>
         </button>
 
         <section className="intro-column">
@@ -200,8 +209,8 @@ export function PortfolioFrame({
                 onClick={() => setSelectedTab(tab)}
                 onKeyDown={(event) => handleTabKeyDown(event, index)}
               >
-                <span aria-hidden="true">
-                  {selectedTab === tab ? "→" : "·"}
+                <span className="ui-symbol" aria-hidden="true">
+                  {selectedTab === tab ? textSymbols.rightArrow : "·"}
                 </span>
                 {tabLabels[tab]}
               </button>
@@ -270,12 +279,18 @@ export function TabContent({
               <div className="project-links" aria-label={`${item.title} links`}>
                 {item.demoUrl && (
                   <a href={item.demoUrl} target="_blank" rel="noreferrer">
-                    demo video ↗
+                    demo video{" "}
+                    <span className="ui-symbol" aria-hidden="true">
+                      {textSymbols.externalArrow}
+                    </span>
                   </a>
                 )}
                 {item.sourceUrl && (
                   <a href={item.sourceUrl} target="_blank" rel="noreferrer">
-                    source code ↗
+                    source code{" "}
+                    <span className="ui-symbol" aria-hidden="true">
+                      {textSymbols.externalArrow}
+                    </span>
                   </a>
                 )}
               </div>

@@ -59,7 +59,12 @@ export function EditorPasswordGate({
           </>
         )}
         {message && <p className="editor-password-error">{message}</p>}
-        <a href="/">← back to site</a>
+        <a href="/">
+          <span className="ui-symbol" aria-hidden="true">
+            {"\u2190\uFE0E"}
+          </span>{" "}
+          back to site
+        </a>
       </form>
     </main>
   );

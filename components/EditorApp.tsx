@@ -349,7 +349,10 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
         </div>
         <div className="editor-actions">
           <a className="editor-button" href="/" target="_blank">
-            view site ↗
+            view site{" "}
+            <span className="ui-symbol" aria-hidden="true">
+              {"\u2197\uFE0E"}
+            </span>
           </a>
           <button className="editor-button" type="button" onClick={saveDraft}>
             save draft
@@ -712,7 +715,13 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
                     </li>
                   ))}
                 </ul>
-                <div className="preview-socials">@ &nbsp; ◎ &nbsp; ▶ &nbsp; in &nbsp; git</div>
+                <div className="preview-socials">
+                  @ &nbsp; ◎ &nbsp;
+                  <span className="ui-symbol" aria-hidden="true">
+                    {"\u25B6\uFE0E"}
+                  </span>
+                  &nbsp; in &nbsp; git
+                </div>
               </section>
               <section className="preview-tabs">
                 <nav>
@@ -723,7 +732,10 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
                       aria-pressed={previewTab === tab}
                       onClick={() => setPreviewTab(tab)}
                     >
-                      {previewTab === tab ? "→" : "·"} {tab}
+                      <span className="ui-symbol" aria-hidden="true">
+                        {previewTab === tab ? "\u2192\uFE0E" : "·"}
+                      </span>{" "}
+                      {tab}
                     </button>
                   ))}
                 </nav>

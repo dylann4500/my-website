@@ -138,6 +138,16 @@ a {
   text-decoration-color: currentColor;
 }
 
+.ui-symbol {
+  display: inline-block;
+  color: currentColor;
+  font-family: "Arial Unicode MS", Arial, sans-serif;
+  font-variant-emoji: text;
+  font-weight: inherit;
+  line-height: 1;
+  text-shadow: none;
+}
+
 button,
 input,
 textarea,
