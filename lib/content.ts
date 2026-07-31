@@ -281,6 +281,12 @@ export function sortAwards(entries: Award[]) {
   );
 }
 
+export function sortProjects(entries: Project[]) {
+  return [...entries].sort((first, second) =>
+    compareDatesDescending(first.year, second.year),
+  );
+}
+
 export function sortPhotos(entries: Photo[]) {
   return [...entries].sort((first, second) =>
     compareDatesDescending(first.date, second.date),
@@ -397,7 +403,7 @@ export function sanitizeContent(value: unknown): SiteContent {
       ? defaultContent.email
       : cleanString(candidate.email, defaultContent.email),
     socials,
-    projects,
+    projects: sortProjects(projects),
     photos: sortPhotos(photos),
     videos,
     experience: sortExperienceEntries(

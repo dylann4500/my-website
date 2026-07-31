@@ -8,6 +8,7 @@ import {
   sortAwards,
   sortExperienceEntries,
   sortPhotos,
+  sortProjects,
   tabIds,
   type Award,
   type Photo,
@@ -104,10 +105,13 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
       experience: sortExperienceEntries(value.experience),
       awards: sortAwards(value.awards),
       photos: sortPhotos(value.photos),
+      projects: sortProjects(value.projects),
     };
   }
 
-  function sortDatedSection(key: "experience" | "awards" | "photos") {
+  function sortDatedSection(
+    key: "experience" | "awards" | "photos" | "projects",
+  ) {
     setContent((current) => {
       if (key === "experience") {
         return {
@@ -118,7 +122,10 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
       if (key === "awards") {
         return { ...current, awards: sortAwards(current.awards) };
       }
-      return { ...current, photos: sortPhotos(current.photos) };
+      if (key === "photos") {
+        return { ...current, photos: sortPhotos(current.photos) };
+      }
+      return { ...current, projects: sortProjects(current.projects) };
     });
   }
 
@@ -444,6 +451,10 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
           />
 
           <RepeatSection title="projects" onAdd={() => addItem("projects")}>
+            <p className="section-note">
+              Sorted by end date after you leave the date field. Single dates
+              and ranges both work; use “Present” for ongoing projects.
+            </p>
             {content.projects.map((item, index) => (
               <RepeatCard
                 key={`project-${index}`}
@@ -458,11 +469,12 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
                     }
                   />
                   <TextField
-                    label="year"
+                    label="date / range"
                     value={item.year}
                     onChange={(value) =>
                       updateItem("projects", index, "year", value)
                     }
+                    onBlur={() => sortDatedSection("projects")}
                   />
                 </div>
                 <TextArea
