@@ -222,6 +222,11 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
     }
   }
 
+  async function lockEditor() {
+    await fetch("/api/editor-session", { method: "DELETE" });
+    window.location.reload();
+  }
+
   async function uploadImage(file: File) {
     const chunkSize = 1280 * 1024;
     const parts = Math.ceil(file.size / chunkSize);
@@ -356,6 +361,13 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
             disabled={saving}
           >
             {saving ? "publishing…" : "publish"}
+          </button>
+          <button
+            className="editor-button"
+            type="button"
+            onClick={lockEditor}
+          >
+            lock
           </button>
         </div>
       </header>
