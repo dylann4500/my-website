@@ -1,89 +1,69 @@
-import {
-  createHash,
-  createHmac,
-  timingSafeEqual,
-} from "node:crypto";
-import { cookies } from "next/headers";
-
-export const EDITOR_COOKIE = "dylan_portfolio_editor";
-const SESSION_VALUE = "editor-session-v1";
+import { eq } from "drizzle-orm";
+import { getDb } from "@/db";
+import { siteContent } from "@/db/schema";
+import { getChatGPTUser } from "@/app/chatgpt-auth";
+import { defaultContent } from "@/lib/content";
+import { ensureContentTable } from "@/lib/content-server";
 
 export type EditorIdentity =
-  | { ok: true }
-  | { ok: false; status: 401 | 503; message: string };
+  | { ok: true; email: string }
+  | { ok: false; status: 401 | 403; message: string };
 
-function digest(value: string) {
-  return createHash("sha256").update(value).digest();
-}
-
-function safeEqual(first: string, second: string) {
-  return timingSafeEqual(digest(first), digest(second));
-}
-
-function sessionToken() {
-  const secret = process.env.EDITOR_SESSION_SECRET;
-  const password = process.env.EDITOR_PASSWORD;
-  if (!secret || !password) return "";
-  return createHmac("sha256", secret)
-    .update(`${SESSION_VALUE}:${password}`)
-    .digest("hex");
-}
-
-export function editorAuthConfigured() {
-  return Boolean(
-    process.env.EDITOR_PASSWORD && process.env.EDITOR_SESSION_SECRET,
-  );
-}
-
-export function passwordIsValid(password: string) {
-  const expected = process.env.EDITOR_PASSWORD;
-  return Boolean(expected && safeEqual(password, expected));
-}
-
-export function requestHasEditorSession(request: Request) {
-  const expected = sessionToken();
-  if (!expected) return false;
-
-  const cookieHeader = request.headers.get("cookie") || "";
-  const value = cookieHeader
-    .split(";")
-    .map((part) => part.trim())
-    .find((part) => part.startsWith(`${EDITOR_COOKIE}=`))
-    ?.slice(EDITOR_COOKIE.length + 1);
-
-  return Boolean(value && safeEqual(decodeURIComponent(value), expected));
-}
-
-export async function browserHasEditorSession() {
-  const expected = sessionToken();
-  if (!expected) return false;
-  const value = (await cookies()).get(EDITOR_COOKIE)?.value;
-  return Boolean(value && safeEqual(value, expected));
-}
-
-export function createEditorSession() {
-  return sessionToken();
+function isLocalRequest(request: Request) {
+  const hostname = new URL(request.url).hostname;
+  return hostname === "localhost" || hostname === "127.0.0.1";
 }
 
 export async function authorizeEditor(
   request: Request,
 ): Promise<EditorIdentity> {
-  if (!editorAuthConfigured()) {
-    return {
-      ok: false,
-      status: 503,
-      message:
-        "Editor authentication is not configured. Add EDITOR_PASSWORD and EDITOR_SESSION_SECRET.",
-    };
-  }
+  const user = await getChatGPTUser();
+  const email = user?.email ?? (isLocalRequest(request) ? "local-preview" : "");
 
-  if (!requestHasEditorSession(request)) {
+  if (!email) {
     return {
       ok: false,
       status: 401,
-      message: "Your editor session has expired. Sign in again.",
+      message: "Sign in with ChatGPT to edit this site.",
     };
   }
 
-  return { ok: true };
+  await ensureContentTable();
+  const db = getDb();
+  const [row] = await db
+    .select({
+      id: siteContent.id,
+      ownerEmail: siteContent.ownerEmail,
+    })
+    .from(siteContent)
+    .where(eq(siteContent.id, 1))
+    .limit(1);
+
+  if (!row) {
+    await db.insert(siteContent).values({
+      id: 1,
+      content: JSON.stringify(defaultContent),
+      ownerEmail: email,
+      updatedAt: new Date().toISOString(),
+    });
+    return { ok: true, email };
+  }
+
+  if (!row.ownerEmail) {
+    await db
+      .update(siteContent)
+      .set({ ownerEmail: email })
+      .where(eq(siteContent.id, 1));
+    return { ok: true, email };
+  }
+
+  if (row.ownerEmail !== email && row.ownerEmail !== "local-preview") {
+    return {
+      ok: false,
+      status: 403,
+      message: "This editor belongs to another account.",
+    };
+  }
+
+  return { ok: true, email };
 }

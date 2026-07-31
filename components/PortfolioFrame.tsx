@@ -73,7 +73,6 @@ export function PortfolioFrame({
   const [selectedTab, setSelectedTab] = useState<TabId>(initialTab);
   const [dark, setDark] = useState(false);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
-  const panelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const saved = window.localStorage.getItem("portfolio-theme");
@@ -82,10 +81,6 @@ export function PortfolioFrame({
     setDark(nextDark);
     document.documentElement.dataset.theme = nextDark ? "dark" : "light";
   }, []);
-
-  useEffect(() => {
-    panelRef.current?.scrollTo({ top: 0, left: 0, behavior: "auto" });
-  }, [selectedTab]);
 
   function toggleTheme() {
     const nextDark = !dark;
@@ -210,7 +205,6 @@ export function PortfolioFrame({
 
           <div
             className="tab-panel"
-            ref={panelRef}
             role="tabpanel"
             id={`panel-${selectedTab}`}
             aria-labelledby={`tab-${selectedTab}`}

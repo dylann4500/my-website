@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, type ChangeEvent } from "react";
-import { upload } from "@vercel/blob/client";
 import { RichText } from "@/components/RichText";
 import { TabContent } from "@/components/PortfolioFrame";
 import {
@@ -224,17 +223,66 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
   }
 
   async function uploadImage(file: File) {
-    const safeName = file.name
-      .toLowerCase()
-      .replace(/[^a-z0-9._-]+/g, "-")
-      .replace(/^-+|-+$/g, "") || "photo.jpg";
-    const blob = await upload(`portfolio/photos/${safeName}`, file, {
-      access: "public",
-      handleUploadUrl: "/api/media",
-      contentType: file.type,
-      multipart: true,
+    const chunkSize = 1280 * 1024;
+    const parts = Math.ceil(file.size / chunkSize);
+    const createResponse = await fetch("/api/media?action=create", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        contentType: file.type,
+        fileName: file.name,
+        size: file.size,
+        parts,
+      }),
     });
-    return blob.url;
+    const created = (await createResponse.json()) as {
+      key?: string;
+      uploadId?: string;
+      error?: string;
+    };
+    if (!createResponse.ok || !created.key || !created.uploadId) {
+      throw new Error(created.error || "Upload could not be started.");
+    }
+
+    for (let index = 0; index < parts; index += 1) {
+      const chunk = file.slice(
+        index * chunkSize,
+        Math.min(file.size, (index + 1) * chunkSize),
+      );
+      const partResponse = await fetch(
+        `/api/media?uploadId=${encodeURIComponent(created.uploadId)}&part=${index + 1}`,
+        {
+          method: "PUT",
+          headers: { "content-type": "application/octet-stream" },
+          body: chunk,
+        },
+      );
+      if (!partResponse.ok) {
+        const result = (await partResponse.json()) as { error?: string };
+        throw new Error(result.error || "An upload piece failed.");
+      }
+    }
+
+    const completeResponse = await fetch("/api/media?action=complete", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        key: created.key,
+        uploadId: created.uploadId,
+        contentType: file.type,
+        fileName: file.name,
+        size: file.size,
+        parts,
+      }),
+    });
+    const completed = (await completeResponse.json()) as {
+      url?: string;
+      error?: string;
+    };
+    if (!completeResponse.ok || !completed.url) {
+      throw new Error(completed.error || "Upload could not be completed.");
+    }
+    return completed.url;
   }
 
   async function uploadPhoto(index: number, event: ChangeEvent<HTMLInputElement>) {
@@ -260,7 +308,7 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
     setUploading("photo-batch");
     setState(`Uploading ${files.length} photos…`);
     try {
-      const uploaded: Photo[] = [];
+      const uploaded = [];
       for (const file of files) {
         const url = await uploadImage(file);
         uploaded.push({

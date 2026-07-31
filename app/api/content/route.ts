@@ -1,8 +1,9 @@
+import { eq } from "drizzle-orm";
+import { getDb } from "@/db";
+import { siteContent } from "@/db/schema";
 import { authorizeEditor } from "@/lib/editor-auth";
-import {
-  getPublishedContent,
-  savePublishedContent,
-} from "@/lib/content-server";
+import { getPublishedContent } from "@/lib/content-server";
+import { sanitizeContent } from "@/lib/content";
 
 export async function GET() {
   const content = await getPublishedContent();
@@ -25,17 +26,20 @@ export async function POST(request: Request) {
     }
 
     const payload = JSON.parse(raw) as { content?: unknown };
-    const content = await savePublishedContent(payload.content);
+    const content = sanitizeContent(payload.content);
+    await getDb()
+      .update(siteContent)
+      .set({
+        content: JSON.stringify(content),
+        ownerEmail: auth.email,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(siteContent.id, 1));
 
     return Response.json({ content, saved: true });
-  } catch (error) {
+  } catch {
     return Response.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "The site could not be published. Please try again.",
-      },
+      { error: "The site could not be published. Please try again." },
       { status: 500 },
     );
   }
