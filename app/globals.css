@@ -46,6 +46,88 @@ a {
   text-decoration: none;
 }
 
+.editor-login-shell {
+  display: grid;
+  min-height: 100svh;
+  place-items: center;
+  padding: 24px;
+  background: #f7f7f5;
+  color: #121212;
+}
+
+.editor-login-card {
+  display: grid;
+  width: min(360px, 100%);
+  gap: 22px;
+}
+
+.editor-login-card h1,
+.editor-login-card p {
+  margin: 0;
+}
+
+.editor-login-card h1 {
+  font-size: 25px;
+  font-weight: 600;
+}
+
+.editor-login-card > div p,
+.editor-login-setup,
+.editor-login-error {
+  margin-top: 4px;
+  color: #686864;
+}
+
+.editor-login-card label {
+  display: grid;
+  gap: 7px;
+  color: #686864;
+  font-size: 12px;
+}
+
+.editor-login-card input {
+  width: 100%;
+  padding: 10px 0;
+  border: 0;
+  border-bottom: 1px solid #cfcfca;
+  border-radius: 0;
+  background: transparent;
+  color: #121212;
+  outline: 0;
+}
+
+.editor-login-card button {
+  width: fit-content;
+  padding: 8px 12px;
+  border: 1px solid #121212;
+  border-radius: 0;
+  background: #121212;
+  color: #fff;
+  cursor: pointer;
+}
+
+.editor-login-card button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.editor-login-card > a {
+  width: fit-content;
+  color: #686864;
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.editor-login-setup code {
+  color: #121212;
+}
+
+.editor-login-error {
+  color: #9f2828;
+  font-size: 12px;
+}
+
 .inline-link {
   text-decoration: underline;
   text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);

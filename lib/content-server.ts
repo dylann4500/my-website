@@ -1,39 +1,52 @@
-import { eq } from "drizzle-orm";
-import { env } from "cloudflare:workers";
-import { getDb } from "@/db";
-import { siteContent } from "@/db/schema";
+import { get, put } from "@vercel/blob";
 import {
   defaultContent,
   sanitizeContent,
   type SiteContent,
 } from "@/lib/content";
 
-const CREATE_CONTENT_TABLE = `
-  CREATE TABLE IF NOT EXISTS site_content (
-    id INTEGER PRIMARY KEY,
-    content TEXT NOT NULL,
-    owner_email TEXT,
-    updated_at TEXT NOT NULL
-  )
-`;
+const CONTENT_PATH = "portfolio/content.json";
 
-export async function ensureContentTable() {
-  if (!env.DB) throw new Error("Database unavailable");
-  await env.DB.prepare(CREATE_CONTENT_TABLE).run();
+export function isContentStorageConfigured() {
+  return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
 }
 
 export async function getPublishedContent(): Promise<SiteContent> {
-  try {
-    await ensureContentTable();
-    const [row] = await getDb()
-      .select({ content: siteContent.content })
-      .from(siteContent)
-      .where(eq(siteContent.id, 1))
-      .limit(1);
+  if (!isContentStorageConfigured()) {
+    return sanitizeContent(defaultContent);
+  }
 
-    if (!row) return sanitizeContent(defaultContent);
-    return sanitizeContent(JSON.parse(row.content));
+  try {
+    const stored = await get(CONTENT_PATH, {
+      access: "public",
+      useCache: false,
+    });
+    if (!stored || stored.statusCode !== 200) {
+      return sanitizeContent(defaultContent);
+    }
+
+    const raw = await new Response(stored.stream).text();
+    return sanitizeContent(JSON.parse(raw));
   } catch {
     return sanitizeContent(defaultContent);
   }
+}
+
+export async function savePublishedContent(
+  value: unknown,
+): Promise<SiteContent> {
+  if (!isContentStorageConfigured()) {
+    throw new Error(
+      "Vercel Blob is not connected. Add BLOB_READ_WRITE_TOKEN first.",
+    );
+  }
+
+  const content = sanitizeContent(value);
+  await put(CONTENT_PATH, JSON.stringify(content), {
+    access: "public",
+    allowOverwrite: true,
+    contentType: "application/json",
+    cacheControlMaxAge: 60,
+  });
+  return content;
 }
