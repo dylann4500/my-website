@@ -17,6 +17,9 @@ export type Project = {
   title: string;
   year: string;
   description: string;
+  demoUrl: string;
+  sourceUrl: string;
+  // Retained so older saved projects with one link migrate cleanly.
   url: string;
 };
 
@@ -50,7 +53,7 @@ export type Award = {
 };
 
 export type SiteContent = {
-  designVersion: 9;
+  designVersion: 10;
   name: string;
   greeting: string;
   bio: string;
@@ -76,7 +79,7 @@ export type SiteContent = {
 };
 
 export const defaultContent: SiteContent = {
-  designVersion: 9,
+  designVersion: 10,
   name: "Dylan",
   greeting: "hi there!",
   bio: "i'm dylan, a student at uc berkeley studying ds + applied math. currently into [fish](https://en.wikipedia.org/wiki/Literature_(card_game)), videography, scriabin, and ml. here are some fun facts!",
@@ -300,7 +303,8 @@ export function sanitizeContent(value: unknown): SiteContent {
     candidate.designVersion !== 6 &&
     candidate.designVersion !== 7 &&
     candidate.designVersion !== 8 &&
-    candidate.designVersion !== 9
+    candidate.designVersion !== 9 &&
+    candidate.designVersion !== 10
   ) {
     return defaultContent;
   }
@@ -323,6 +327,8 @@ export function sanitizeContent(value: unknown): SiteContent {
         title: cleanString(item?.title),
         year: cleanString(item?.year),
         description: cleanString(item?.description),
+        demoUrl: cleanUrl(item?.demoUrl || item?.url),
+        sourceUrl: cleanUrl(item?.sourceUrl),
         url: cleanUrl(item?.url),
       }))
     : [];
@@ -379,7 +385,7 @@ export function sanitizeContent(value: unknown): SiteContent {
     : defaultContent.defaultTab;
 
   return {
-    designVersion: 9,
+    designVersion: 10,
     name: cleanString(candidate.name, defaultContent.name),
     greeting: cleanString(candidate.greeting, defaultContent.greeting),
     bio: needsProfileUpdate || needsLinkSyntaxUpdate

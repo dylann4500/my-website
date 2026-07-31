@@ -286,6 +286,26 @@ select:focus-visible,
   font-style: italic;
 }
 
+.project-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.project-links a {
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+  text-underline-offset: 3px;
+}
+
+.project-links a:hover {
+  color: var(--text);
+  text-decoration-color: currentColor;
+}
+
 .entry-points {
   margin: 12px 0 0;
   padding: 0;

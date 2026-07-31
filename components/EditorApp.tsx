@@ -32,7 +32,14 @@ const newItems: Record<
   SocialLink | Project | Photo | Video | ResumeEntry | Award
 > = {
   socials: { label: "New link", url: "" },
-  projects: { title: "New project", year: "", description: "", url: "" },
+  projects: {
+    title: "New project",
+    year: "",
+    description: "",
+    demoUrl: "",
+    sourceUrl: "",
+    url: "",
+  },
   photos: {
     title: "Untitled",
     date: "",
@@ -62,7 +69,7 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
     if (!draft) return;
     try {
       const parsed = JSON.parse(draft) as Partial<SiteContent>;
-      if (parsed.designVersion !== 9) {
+      if (parsed.designVersion !== 10) {
         window.localStorage.removeItem("portfolio-editor-draft");
         return;
       }
@@ -466,13 +473,22 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
                   }
                   linkHint
                 />
-                <TextField
-                  label="url"
-                  value={item.url}
-                  onChange={(value) =>
-                    updateItem("projects", index, "url", value)
-                  }
-                />
+                <div className="field-row">
+                  <TextField
+                    label="demo video url"
+                    value={item.demoUrl}
+                    onChange={(value) =>
+                      updateItem("projects", index, "demoUrl", value)
+                    }
+                  />
+                  <TextField
+                    label="source code url"
+                    value={item.sourceUrl}
+                    onChange={(value) =>
+                      updateItem("projects", index, "sourceUrl", value)
+                    }
+                  />
+                </div>
               </RepeatCard>
             ))}
           </RepeatSection>

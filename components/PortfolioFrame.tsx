@@ -256,16 +256,24 @@ export function TabContent({
         {content.projects.map((item, index) => (
           <article className="text-entry" key={`${item.title}-${index}`}>
             <div className="entry-heading">
-              {item.url ? (
-                <a href={item.url} target="_blank" rel="noreferrer">
-                  <strong>{item.title} ↗</strong>
-                </a>
-              ) : (
-                <strong>{item.title}</strong>
-              )}
+              <strong>{item.title}</strong>
               <span>{item.year}</span>
             </div>
             {item.description && <p><RichText text={item.description} /></p>}
+            {(item.demoUrl || item.sourceUrl) && (
+              <div className="project-links" aria-label={`${item.title} links`}>
+                {item.demoUrl && (
+                  <a href={item.demoUrl} target="_blank" rel="noreferrer">
+                    demo video ↗
+                  </a>
+                )}
+                {item.sourceUrl && (
+                  <a href={item.sourceUrl} target="_blank" rel="noreferrer">
+                    source code ↗
+                  </a>
+                )}
+              </div>
+            )}
           </article>
         ))}
       </div>
