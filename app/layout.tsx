@@ -52,7 +52,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body>{children}</body>
+      <body>
+        {children}
+        <script
+          type="module"
+          src="https://static.cloudflareinsights.com/beacon.min.js"
+          data-cf-beacon='{"token":"76789d811e3145b89b9ac3e9b214fe20"}'
+        />
+      </body>
     </html>
   );
 }
