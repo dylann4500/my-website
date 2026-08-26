@@ -13,6 +13,7 @@ import {
   type SiteContent,
   type TabId,
 } from "@/lib/content";
+import { formatWritingDate, type WritingSummary } from "@/lib/writing";
 
 type PageName = "home" | "projects" | "photos" | "videos" | "resume";
 
@@ -22,6 +23,7 @@ const tabLabels: Record<TabId, string> = {
   videos: "videos",
   gallery: "gallery",
   awards: "awards",
+  writing: "writing",
 };
 
 const pageTab: Record<PageName, TabId | null> = {
@@ -72,11 +74,19 @@ function youtubeVideoId(value: string) {
 export function PortfolioFrame({
   active,
   content,
+  writing = [],
 }: {
   active: PageName;
   content: SiteContent;
+  writing?: WritingSummary[];
 }) {
-  const initialTab = pageTab[active] ?? content.defaultTab;
+  const publicTabs: TabId[] = content.writingVisible
+    ? [...tabIds]
+    : tabIds.filter((tab) => tab !== "writing");
+  const requestedTab = pageTab[active] ?? content.defaultTab;
+  const initialTab = publicTabs.includes(requestedTab)
+    ? requestedTab
+    : "experience";
   const [selectedTab, setSelectedTab] = useState<TabId>(initialTab);
   const [dark, setDark] = useState(false);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -86,6 +96,8 @@ export function PortfolioFrame({
     const saved = window.localStorage.getItem("portfolio-theme");
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     const nextDark = saved ? saved === "dark" : prefersDark;
+    // The saved browser theme is only available after hydration.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDark(nextDark);
     document.documentElement.dataset.theme = nextDark ? "dark" : "light";
   }, []);
@@ -107,18 +119,18 @@ export function PortfolioFrame({
   function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     let nextIndex = index;
     if (event.key === "ArrowDown" || event.key === "ArrowRight") {
-      nextIndex = (index + 1) % tabIds.length;
+      nextIndex = (index + 1) % publicTabs.length;
     } else if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
-      nextIndex = (index - 1 + tabIds.length) % tabIds.length;
+      nextIndex = (index - 1 + publicTabs.length) % publicTabs.length;
     } else if (event.key === "Home") {
       nextIndex = 0;
     } else if (event.key === "End") {
-      nextIndex = tabIds.length - 1;
+      nextIndex = publicTabs.length - 1;
     } else {
       return;
     }
     event.preventDefault();
-    setSelectedTab(tabIds[nextIndex]);
+    setSelectedTab(publicTabs[nextIndex]);
     tabRefs.current[nextIndex]?.focus();
   }
 
@@ -193,7 +205,7 @@ export function PortfolioFrame({
             aria-label="Portfolio sections"
             aria-orientation="vertical"
           >
-            {tabIds.map((tab, index) => (
+            {publicTabs.map((tab, index) => (
               <button
                 type="button"
                 role="tab"
@@ -225,7 +237,7 @@ export function PortfolioFrame({
             aria-labelledby={`tab-${selectedTab}`}
             tabIndex={0}
           >
-            <TabContent tab={selectedTab} content={content} />
+            <TabContent tab={selectedTab} content={content} writing={writing} />
           </div>
         </section>
       </section>
@@ -236,9 +248,11 @@ export function PortfolioFrame({
 export function TabContent({
   tab,
   content,
+  writing = [],
 }: {
   tab: TabId;
   content: SiteContent;
+  writing?: WritingSummary[];
 }) {
   if (tab === "experience") {
     if (!content.experience.length) return <EmptyState />;
@@ -347,6 +361,20 @@ export function TabContent({
   if (tab === "gallery") {
     if (!content.photos.length) return <EmptyState />;
     return <GalleryContent photos={content.photos} />;
+  }
+
+  if (tab === "writing") {
+    if (!writing.length) return <EmptyState />;
+    return (
+      <div className="writing-index-list">
+        {writing.map((article) => (
+          <a href={`/writing/${article.slug}`} key={article.id}>
+            <strong>{article.title || "Untitled"}</strong>
+            <span>{formatWritingDate(article.writtenAt)}</span>
+          </a>
+        ))}
+      </div>
+    );
   }
 
   if (!content.awards.length) return <EmptyState />;

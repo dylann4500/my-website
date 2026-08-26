@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, type FormEvent } from "react";
 
 export function EditorPasswordGate({
@@ -59,12 +60,12 @@ export function EditorPasswordGate({
           </>
         )}
         {message && <p className="editor-password-error">{message}</p>}
-        <a href="/">
+        <Link href="/">
           <span className="ui-symbol" aria-hidden="true">
             {"\u2190\uFE0E"}
           </span>{" "}
           back to site
-        </a>
+        </Link>
       </form>
     </main>
   );

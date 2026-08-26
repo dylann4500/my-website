@@ -9,6 +9,8 @@ export function ThemeToggle() {
     const saved = window.localStorage.getItem("portfolio-theme");
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     const nextDark = saved ? saved === "dark" : prefersDark;
+    // The saved browser theme is only available after hydration.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDark(nextDark);
     document.documentElement.dataset.theme = nextDark ? "dark" : "light";
   }, []);

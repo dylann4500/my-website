@@ -1,0 +1,1 @@
+CREATE INDEX `idx_writing_articles_published_written_at` ON `writing_articles` (`published`,`written_at`);

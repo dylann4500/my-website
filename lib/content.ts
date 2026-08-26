@@ -4,6 +4,7 @@ export const tabIds = [
   "projects",
   "videos",
   "gallery",
+  "writing",
 ] as const;
 
 export type TabId = (typeof tabIds)[number];
@@ -53,7 +54,7 @@ export type Award = {
 };
 
 export type SiteContent = {
-  designVersion: 10;
+  designVersion: 11;
   name: string;
   greeting: string;
   bio: string;
@@ -66,6 +67,7 @@ export type SiteContent = {
   videos: Video[];
   experience: ResumeEntry[];
   awards: Award[];
+  writingVisible: boolean;
   // Legacy fields are retained so previously saved content remains readable.
   eyebrow: string;
   headline: string;
@@ -79,7 +81,7 @@ export type SiteContent = {
 };
 
 export const defaultContent: SiteContent = {
-  "designVersion": 10,
+  "designVersion": 11,
   "name": "Dylan",
   "greeting": "hi there!",
   "bio": "i'm dylan, a student at uc berkeley studying ds + applied math. currently into [fish](https://en.wikipedia.org/wiki/Literature_(card_game)), videography, scriabin, and ml. here are some fun facts!",
@@ -92,6 +94,7 @@ export const defaultContent: SiteContent = {
   ],
   "defaultTab": "experience",
   "email": "nguyennalyd3@gmail.com",
+  "writingVisible": false,
   "socials": [
     {
       "label": "Instagram",
@@ -519,7 +522,8 @@ export function sanitizeContent(value: unknown): SiteContent {
     candidate.designVersion !== 7 &&
     candidate.designVersion !== 8 &&
     candidate.designVersion !== 9 &&
-    candidate.designVersion !== 10
+    candidate.designVersion !== 10 &&
+    candidate.designVersion !== 11
   ) {
     return defaultContent;
   }
@@ -600,7 +604,7 @@ export function sanitizeContent(value: unknown): SiteContent {
     : defaultContent.defaultTab;
 
   return {
-    designVersion: 10,
+    designVersion: 11,
     name: cleanString(candidate.name, defaultContent.name),
     greeting: cleanString(candidate.greeting, defaultContent.greeting),
     bio: needsProfileUpdate || needsLinkSyntaxUpdate
@@ -623,6 +627,8 @@ export function sanitizeContent(value: unknown): SiteContent {
     awards: sortAwards(
       needsPortfolioContentUpdate ? defaultContent.awards : awards,
     ),
+    writingVisible:
+      candidate.designVersion >= 11 && candidate.writingVisible === true,
     eyebrow: cleanString(candidate.eyebrow),
     headline: cleanString(candidate.headline),
     intro: cleanString(candidate.intro),

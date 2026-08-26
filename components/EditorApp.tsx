@@ -70,10 +70,12 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
     if (!draft) return;
     try {
       const parsed = JSON.parse(draft) as Partial<SiteContent>;
-      if (parsed.designVersion !== 10) {
+      if (parsed.designVersion !== 11) {
         window.localStorage.removeItem("portfolio-editor-draft");
         return;
       }
+      // Restoring a browser-only draft necessarily happens after hydration.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setContent(parsed as SiteContent);
       setState("Draft restored from this browser");
     } catch {
@@ -96,6 +98,11 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
   function updateDefaultTab(value: TabId) {
     setContent((current) => ({ ...current, defaultTab: value }));
     setPreviewTab(value);
+    markChanged();
+  }
+
+  function updateWritingVisibility(value: boolean) {
+    setContent((current) => ({ ...current, writingVisible: value }));
     markChanged();
   }
 
@@ -313,7 +320,7 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
     setUploading("photo-batch");
     setState(`Uploading ${files.length} photos…`);
     try {
-      const uploaded = [];
+      const uploaded: Photo[] = [];
       for (const file of files) {
         const url = await uploadImage(file);
         uploaded.push({
@@ -348,6 +355,9 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
           <span className="save-state">{state}</span>
         </div>
         <div className="editor-actions">
+          <a className="editor-button" href="/edit/writing">
+            writing
+          </a>
           <a className="editor-button" href="/" target="_blank">
             view site{" "}
             <span className="ui-symbol" aria-hidden="true">
@@ -416,6 +426,24 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
               value={content.defaultTab}
               onChange={updateDefaultTab}
             />
+          </EditorSection>
+
+          <EditorSection title="writing">
+            <p className="section-note">
+              Your writing editor and drafts stay private. Turn this on only when
+              you want the writing tab and ready pieces to appear publicly.
+            </p>
+            <label className="editor-checkbox-field">
+              <input
+                type="checkbox"
+                checked={content.writingVisible}
+                onChange={(event) => updateWritingVisibility(event.target.checked)}
+              />
+              show writing on the public site
+            </label>
+            <a className="tiny-button writing-editor-link" href="/edit/writing">
+              open writing editor →
+            </a>
           </EditorSection>
 
           <RepeatSection title="fun facts" onAdd={addFact}>
