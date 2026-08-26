@@ -19,10 +19,6 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description:
       "Dylan studies data science and applied mathematics at UC Berkeley.",
-    icons: {
-      icon: "/globe.svg",
-      shortcut: "/globe.svg",
-    },
     openGraph: {
       title: "Dylan",
       description: "Data science + applied math at UC Berkeley.",
