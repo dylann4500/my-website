@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import Script from "next/script";
 import "./globals.css";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -51,10 +50,11 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body>
         {children}
-        <Script
+        <script
+          type="module"
+          async
           src="https://static.cloudflareinsights.com/beacon.min.js"
           data-cf-beacon='{"token":"76789d811e3145b89b9ac3e9b214fe20"}'
-          strategy="afterInteractive"
         />
       </body>
     </html>
