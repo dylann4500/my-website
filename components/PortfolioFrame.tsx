@@ -433,6 +433,11 @@ function GalleryContent({ photos }: { photos: Photo[] }) {
 
   return (
     <>
+      <p className="gallery-guide">
+        <span>click a photo to learn more</span>
+        <span aria-hidden="true">·</span>
+        <span><span className="camera-dagger" aria-hidden="true">†</span> taken on Nikon D610</span>
+      </p>
       <div className="gallery-grid">
         {photos.map((photo, index) => (
           <button
@@ -477,7 +482,18 @@ function GalleryContent({ photos }: { photos: Photo[] }) {
             )}
             <div className="gallery-meta">
               <div className="entry-heading">
-                <strong>{selected.title}</strong>
+                <strong>
+                  {selected.title}
+                  {selected.takenOnD610 && (
+                    <sup
+                      className="camera-dagger"
+                      aria-label=" — taken on Nikon D610"
+                      title="Taken on Nikon D610"
+                    >
+                      †
+                    </sup>
+                  )}
+                </strong>
                 <span>{selected.date}</span>
               </div>
               {selected.description && (

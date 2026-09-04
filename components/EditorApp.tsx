@@ -47,6 +47,7 @@ const newItems: Record<
     description: "",
     caption: "",
     url: "",
+    takenOnD610: false,
   },
   videos: { title: "New video", year: "", description: "", url: "" },
   experience: {
@@ -166,7 +167,7 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
     key: ArrayKey,
     index: number,
     field: string,
-    value: string,
+    value: string | boolean,
   ) {
     setContent((current) => ({
       ...current,
@@ -331,6 +332,7 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
           description: "",
           caption: "",
           url,
+          takenOnD610: false,
         });
       }
       setContent((current) => ({
@@ -639,6 +641,21 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
                   }
                   linkHint
                 />
+                <label className="editor-checkbox-field photo-camera-field">
+                  <input
+                    type="checkbox"
+                    checked={item.takenOnD610 === true}
+                    onChange={(event) =>
+                      updateItem(
+                        "photos",
+                        index,
+                        "takenOnD610",
+                        event.target.checked,
+                      )
+                    }
+                  />
+                  taken on Nikon D610 (adds † to the opened photo title)
+                </label>
                 <TextField
                   label="image url"
                   value={item.url}

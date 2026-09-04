@@ -30,6 +30,7 @@ export type Photo = {
   description: string;
   caption: string;
   url: string;
+  takenOnD610?: boolean;
 };
 
 export type Video = {
@@ -559,6 +560,7 @@ export function sanitizeContent(value: unknown): SiteContent {
         description: cleanString(item?.description, cleanString(item?.caption)),
         caption: cleanString(item?.caption),
         url: cleanUrl(item?.url),
+        takenOnD610: item?.takenOnD610 === true,
       }))
     : [];
 
