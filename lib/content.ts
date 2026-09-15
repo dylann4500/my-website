@@ -13,6 +13,8 @@ export type SocialLink = {
   url: string;
 };
 
+const xProfile: SocialLink = { label: "X", url: "https://x.com/dylann4500" };
+
 export type Project = {
   title: string;
   year: string;
@@ -54,7 +56,7 @@ export type Award = {
 };
 
 export type SiteContent = {
-  designVersion: 11;
+  designVersion: 12;
   name: string;
   greeting: string;
   bio: string;
@@ -81,7 +83,7 @@ export type SiteContent = {
 };
 
 export const defaultContent: SiteContent = {
-  "designVersion": 11,
+  "designVersion": 12,
   "name": "Dylan",
   "greeting": "hi there!",
   "bio": "i'm dylan, a student at uc berkeley studying ds + applied math. currently into [fish](https://en.wikipedia.org/wiki/Literature_(card_game)), videography, scriabin, and ml. here are some fun facts!",
@@ -111,7 +113,8 @@ export const defaultContent: SiteContent = {
     {
       "label": "GitHub",
       "url": "https://github.com/dylann4500"
-    }
+    },
+    xProfile
   ],
   "projects": [
     {
@@ -523,7 +526,8 @@ export function sanitizeContent(value: unknown): SiteContent {
     candidate.designVersion !== 8 &&
     candidate.designVersion !== 9 &&
     candidate.designVersion !== 10 &&
-    candidate.designVersion !== 11
+    candidate.designVersion !== 11 &&
+    candidate.designVersion !== 12
   ) {
     return defaultContent;
   }
@@ -540,6 +544,11 @@ export function sanitizeContent(value: unknown): SiteContent {
         url: cleanUrl(item?.url),
       }))
     : defaultContent.socials;
+
+  const migratedSocials = candidate.designVersion < 12 &&
+    !socials.some((item) => item.label.toLowerCase() === "x" || item.url === xProfile.url)
+    ? [...socials, xProfile]
+    : socials;
 
   const projects = Array.isArray(candidate.projects)
     ? candidate.projects.slice(0, 30).map((item) => ({
@@ -605,7 +614,7 @@ export function sanitizeContent(value: unknown): SiteContent {
     : defaultContent.defaultTab;
 
   return {
-    designVersion: 11,
+    designVersion: 12,
     name: cleanString(candidate.name, defaultContent.name),
     greeting: cleanString(candidate.greeting, defaultContent.greeting),
     bio: needsProfileUpdate || needsLinkSyntaxUpdate
@@ -616,7 +625,7 @@ export function sanitizeContent(value: unknown): SiteContent {
     email: needsProfileUpdate
       ? defaultContent.email
       : cleanString(candidate.email, defaultContent.email),
-    socials,
+    socials: migratedSocials,
     projects: sortProjects(projects),
     photos: sortPhotos(photos),
     videos,

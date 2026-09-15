@@ -37,6 +37,7 @@ const socialIcons: Record<string, string> = {
   youtube: "/icons/youtube.svg",
   linkedin: "/icons/linkedin.svg",
   github: "/icons/github.svg",
+  x: "/icons/x.svg",
 };
 
 const socialFallbacks: Record<string, string> = {
@@ -44,6 +45,7 @@ const socialFallbacks: Record<string, string> = {
   youtube: "https://www.youtube.com/@DylanNguyenn",
   linkedin: "https://www.linkedin.com/in/dylan-nguyen-b765482a8/",
   github: "https://github.com/dylann4500",
+  x: "https://x.com/dylann4500",
 };
 
 const emailFallback = "nguyennalyd3@gmail.com";

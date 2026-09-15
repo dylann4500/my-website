@@ -5,6 +5,7 @@ import { RichText } from "@/components/RichText";
 import { TabContent } from "@/components/PortfolioFrame";
 import {
   defaultContent,
+  sanitizeContent,
   sortAwards,
   sortExperienceEntries,
   sortPhotos,
@@ -70,14 +71,16 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
     const draft = window.localStorage.getItem("portfolio-editor-draft");
     if (!draft) return;
     try {
-      const parsed = JSON.parse(draft) as Partial<SiteContent>;
-      if (parsed.designVersion !== 11) {
+      const parsed = JSON.parse(draft) as Partial<Omit<SiteContent, "designVersion">> & {
+        designVersion?: number;
+      };
+      if (parsed.designVersion !== 11 && parsed.designVersion !== 12) {
         window.localStorage.removeItem("portfolio-editor-draft");
         return;
       }
       // Restoring a browser-only draft necessarily happens after hydration.
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setContent(parsed as SiteContent);
+      setContent(sanitizeContent(parsed));
       setState("Draft restored from this browser");
     } catch {
       window.localStorage.removeItem("portfolio-editor-draft");
