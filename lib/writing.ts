@@ -88,11 +88,11 @@ export function formatWritingDate(value: string) {
   if (Number.isNaN(date.valueOf())) return value;
   return new Intl.DateTimeFormat("en-US", {
     timeZone: "America/Los_Angeles",
-    timeZoneName: "short",
     month: "short",
     day: "numeric",
     year: "numeric",
     hour: "numeric",
+    hourCycle: "h23",
     minute: "2-digit",
   }).format(date);
 }
