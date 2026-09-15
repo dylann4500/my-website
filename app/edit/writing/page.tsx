@@ -3,7 +3,6 @@ import { headers } from "next/headers";
 import { requireChatGPTUser } from "@/app/chatgpt-auth";
 import { EditorPasswordGate } from "@/components/EditorPasswordGate";
 import { WritingEditor } from "@/components/WritingEditor";
-import { getPublishedContent } from "@/lib/content-server";
 import {
   browserHasEditorPasswordSession,
   editorPasswordConfigured,
@@ -24,8 +23,7 @@ async function WritingEditorGate() {
   if (!isLocal && (!editorPasswordConfigured() || !(await browserHasEditorPasswordSession()))) {
     return <EditorPasswordGate configured={editorPasswordConfigured()} />;
   }
-  const content = await getPublishedContent();
-  return <WritingEditor writingVisible={content.writingVisible} />;
+  return <WritingEditor />;
 }
 
 export default function WritingEditorPage() {

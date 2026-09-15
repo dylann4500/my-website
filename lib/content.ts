@@ -4,7 +4,6 @@ export const tabIds = [
   "projects",
   "videos",
   "gallery",
-  "writing",
 ] as const;
 
 export type TabId = (typeof tabIds)[number];
@@ -68,7 +67,7 @@ export type SiteContent = {
   videos: Video[];
   experience: ResumeEntry[];
   awards: Award[];
-  writingVisible: boolean;
+  writingVisible: boolean; // Legacy site setting, retained for saved content.
   // Legacy fields are retained so previously saved content remains readable.
   eyebrow: string;
   headline: string;

@@ -102,11 +102,6 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
     markChanged();
   }
 
-  function updateWritingVisibility(value: boolean) {
-    setContent((current) => ({ ...current, writingVisible: value }));
-    markChanged();
-  }
-
   function sortedContent(value: SiteContent): SiteContent {
     return {
       ...value,
@@ -432,17 +427,10 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
 
           <EditorSection title="writing">
             <p className="section-note">
-              Your writing editor and drafts stay private. Turn this on only when
-              you want the writing tab and ready pieces to appear publicly.
+              Share /writing with anyone you choose. Pieces marked ready in the
+              writing editor appear there; drafts stay private. The page has no
+              link in your site navigation and asks search engines not to index it.
             </p>
-            <label className="editor-checkbox-field">
-              <input
-                type="checkbox"
-                checked={content.writingVisible}
-                onChange={(event) => updateWritingVisibility(event.target.checked)}
-              />
-              show writing on the public site
-            </label>
             <a className="tiny-button writing-editor-link" href="/edit/writing">
               open writing editor →
             </a>

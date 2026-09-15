@@ -13,7 +13,6 @@ import {
   type SiteContent,
   type TabId,
 } from "@/lib/content";
-import { formatWritingDate, type WritingSummary } from "@/lib/writing";
 
 type PageName = "home" | "projects" | "photos" | "videos" | "resume";
 
@@ -23,7 +22,6 @@ const tabLabels: Record<TabId, string> = {
   videos: "videos",
   gallery: "gallery",
   awards: "awards",
-  writing: "writing",
 };
 
 const pageTab: Record<PageName, TabId | null> = {
@@ -74,15 +72,11 @@ function youtubeVideoId(value: string) {
 export function PortfolioFrame({
   active,
   content,
-  writing = [],
 }: {
   active: PageName;
   content: SiteContent;
-  writing?: WritingSummary[];
 }) {
-  const publicTabs: TabId[] = content.writingVisible
-    ? [...tabIds]
-    : tabIds.filter((tab) => tab !== "writing");
+  const publicTabs: TabId[] = [...tabIds];
   const requestedTab = pageTab[active] ?? content.defaultTab;
   const initialTab = publicTabs.includes(requestedTab)
     ? requestedTab
@@ -237,7 +231,7 @@ export function PortfolioFrame({
             aria-labelledby={`tab-${selectedTab}`}
             tabIndex={0}
           >
-            <TabContent tab={selectedTab} content={content} writing={writing} />
+            <TabContent tab={selectedTab} content={content} />
           </div>
         </section>
       </section>
@@ -248,11 +242,9 @@ export function PortfolioFrame({
 export function TabContent({
   tab,
   content,
-  writing = [],
 }: {
   tab: TabId;
   content: SiteContent;
-  writing?: WritingSummary[];
 }) {
   if (tab === "experience") {
     if (!content.experience.length) return <EmptyState />;
@@ -361,20 +353,6 @@ export function TabContent({
   if (tab === "gallery") {
     if (!content.photos.length) return <EmptyState />;
     return <GalleryContent photos={content.photos} />;
-  }
-
-  if (tab === "writing") {
-    if (!writing.length) return <EmptyState />;
-    return (
-      <div className="writing-index-list">
-        {writing.map((article) => (
-          <a href={`/writing/${article.slug}`} key={article.id}>
-            <strong>{article.title || "Untitled"}</strong>
-            <span>{formatWritingDate(article.writtenAt)}</span>
-          </a>
-        ))}
-      </div>
-    );
   }
 
   if (!content.awards.length) return <EmptyState />;

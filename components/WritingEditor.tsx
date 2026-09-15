@@ -38,7 +38,7 @@ function toDateTimeLocal(value: string) {
   return new Date(date.valueOf() - offset).toISOString().slice(0, 16);
 }
 
-export function WritingEditor({ writingVisible }: { writingVisible: boolean }) {
+export function WritingEditor() {
   const [articles, setArticles] = useState<WritingArticle[]>([]);
   const [selected, setSelected] = useState<WritingArticle | null>(null);
   const [mode, setMode] = useState<"edit" | "preview">("edit");
@@ -114,7 +114,7 @@ export function WritingEditor({ writingVisible }: { writingVisible: boolean }) {
         : current);
       setDirty(false);
       setSaveState(saved.published
-        ? writingVisible ? "Saved and visible on your site" : "Saved — public writing is still hidden"
+        ? "Saved and available on /writing"
         : "Saved as a private draft");
     } catch (error) {
       setSaveState(error instanceof Error ? error.message : "Could not save");
@@ -246,7 +246,7 @@ export function WritingEditor({ writingVisible }: { writingVisible: boolean }) {
             <button type="button" onClick={createArticle}>+ new</button>
           </div>
           <p className="writing-privacy-note">
-            {writingVisible ? "Public tab is on. Only pieces marked ready appear." : "Private mode. Nothing appears on your public site."}
+            Only ready pieces appear at /writing. Anyone with the link can read them.
           </p>
           <nav aria-label="Writing drafts">
             {articles.map((article) => (
@@ -295,7 +295,7 @@ export function WritingEditor({ writingVisible }: { writingVisible: boolean }) {
                     checked={selected.published}
                     onChange={(event) => updateSelected((article) => ({ ...article, published: event.target.checked }))}
                   />
-                  ready for public list
+                  show on unlisted writing page
                 </label>
               </div>
 

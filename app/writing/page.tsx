@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { getPublishedContent } from "@/lib/content-server";
 import { formatWritingDate } from "@/lib/writing";
 import { getPublishedWritingSummaries } from "@/lib/writing-server";
 
@@ -11,11 +9,10 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Writing",
   description: "Essays and notes by Dylan.",
+  robots: { index: false, follow: false },
 };
 
 export default async function WritingPage() {
-  const content = await getPublishedContent();
-  if (!content.writingVisible) notFound();
   const articles = await getPublishedWritingSummaries();
   return (
     <main className="writing-public-shell">
