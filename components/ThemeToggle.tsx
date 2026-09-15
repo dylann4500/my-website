@@ -28,9 +28,11 @@ export function ThemeToggle() {
       type="button"
       onClick={toggle}
       aria-label={`Switch to ${dark ? "light" : "dark"} mode`}
+      title={`Switch to ${dark ? "light" : "dark"} mode`}
     >
-      <span className="theme-dot" aria-hidden="true" />
-      {dark ? "Light" : "Dark"}
+      <span className="ui-symbol" aria-hidden="true">
+        {dark ? "\u2600\uFE0E" : "\u25D0\uFE0E"}
+      </span>
     </button>
   );
 }

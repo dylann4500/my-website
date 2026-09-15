@@ -22,7 +22,7 @@ export default async function WritingPage() {
       </header>
       <section className="writing-public-index">
         <h1>writing</h1>
-        <p>essays, observations, and unfinished thoughts.</p>
+        <p>you found me! here are some of my unfiltered thoughts</p>
         <div className="writing-public-list">
           {articles.length ? articles.map((article) => (
             <Link href={`/writing/${article.slug}`} key={article.id}>
