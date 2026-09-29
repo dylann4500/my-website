@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { SiteShell } from "@/components/SiteShell";
 import { WritingArticleView } from "@/components/WritingArticleView";
+import { plainText } from "@/lib/rich-text";
 import { getPublishedWritingArticle } from "@/lib/writing-server";
 
 export const dynamic = "force-dynamic";
@@ -14,12 +14,12 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const article = await getPublishedWritingArticle((await params).slug);
   if (!article) return { title: "Not found", robots: { index: false, follow: false } };
-  const description = article.blocks.find((block) => block.type === "paragraph" && block.text.trim())?.text.slice(0, 155)
+  const firstParagraph = article.blocks.find((block) => block.type === "paragraph" && block.text.trim());
+  const description = (firstParagraph && plainText(firstParagraph.text).slice(0, 155))
     || "An essay by Dylan.";
   return {
     title: article.title || "Untitled",
     description,
-    robots: { index: false, follow: false },
     openGraph: { title: article.title || "Untitled", description, images: [] },
     twitter: { card: "summary", title: article.title || "Untitled", description, images: [] },
   };
@@ -33,12 +33,8 @@ export default async function WritingArticlePage({
   const article = await getPublishedWritingArticle((await params).slug);
   if (!article) notFound();
   return (
-    <main className="writing-public-shell">
-      <header className="writing-public-nav">
-        <Link href="/writing">← writing</Link>
-        <ThemeToggle />
-      </header>
+    <SiteShell backHref="/writing">
       <WritingArticleView article={article} />
-    </main>
+    </SiteShell>
   );
 }

@@ -1,94 +1,8 @@
-export const tabIds = [
-  "experience",
-  "awards",
-  "projects",
-  "videos",
-  "gallery",
-] as const;
-
-export type TabId = (typeof tabIds)[number];
-
-export type SocialLink = {
-  label: string;
-  url: string;
-};
-
-const xProfile: SocialLink = { label: "X", url: "https://x.com/dylann4500" };
-
-export type Project = {
-  title: string;
-  year: string;
-  description: string;
-  demoUrl: string;
-  sourceUrl: string;
-  // Retained so older saved projects with one link migrate cleanly.
-  url: string;
-};
-
-export type Photo = {
-  title: string;
-  date: string;
-  description: string;
-  caption: string;
-  url: string;
-  // Legacy camera marker, retained for saved content but no longer shown.
-  takenOnD610?: boolean;
-};
-
-export type Video = {
-  title: string;
-  year: string;
-  description: string;
-  url: string;
-};
-
-export type ResumeEntry = {
-  title: string;
-  organization: string;
-  period: string;
-  description: string;
-};
-
-export type Award = {
-  title: string;
-  year: string;
-  description: string;
-  details: string;
-};
-
-export type SiteContent = {
-  designVersion: 13;
-  name: string;
-  greeting: string;
-  bio: string;
-  facts: string[];
-  portraitUrl: string;
-  defaultTab: TabId; // Legacy opening tab from the tabbed layout.
-  email: string;
-  socials: SocialLink[];
-  projects: Project[];
-  photos: Photo[];
-  videos: Video[];
-  experience: ResumeEntry[];
-  awards: Award[];
-  writingVisible: boolean; // Legacy site setting, retained for saved content.
-  // Legacy fields are retained so previously saved content remains readable.
-  eyebrow: string;
-  headline: string;
-  intro: string;
-  location: string;
-  availability: string;
-  about: string;
-  resumeSummary: string;
-  resumeUrl: string;
-  education: ResumeEntry[];
-};
-
-export const defaultContent: SiteContent = {
-  "designVersion": 13,
+{
+  "designVersion": 12,
   "name": "Dylan",
-  "greeting": "hi! i'm dylan nguyen.",
-  "bio": "current ds + applied math student at berkeley. presently interested in [fish](https://en.wikipedia.org/wiki/Literature_(card_game)), impressionism, iceland, and ml. fun facts:",
+  "greeting": "hi there!",
+  "bio": "i'm dylan, a student at uc berkeley studying ds + applied math. currently into [fish](https://en.wikipedia.org/wiki/Literature_(card_game)), videography, scriabin, and ml. here are some fun facts!",
   "facts": [
     "performed violin for the U.S. Secret Service",
     "top 0.1% fastest [typists](https://monkeytype.com/profile/dylann4500) worldwide",
@@ -96,23 +10,28 @@ export const defaultContent: SiteContent = {
     "ex-#1 nationwide [aristocrat](https://cryptograms.puzzlebaron.com/play.php) solver",
     "learning some photography on my nikon d610"
   ],
-  "portraitUrl": "",
   "defaultTab": "experience",
   "email": "nguyennalyd3@gmail.com",
-  "writingVisible": false,
   "socials": [
     {
-      "label": "github",
-      "url": "https://github.com/dylann4500"
+      "label": "Instagram",
+      "url": "https://www.instagram.com/nnguyen.dylann/"
     },
-    xProfile,
     {
-      "label": "youtube",
+      "label": "YouTube",
       "url": "https://www.youtube.com/@DylanNguyenn"
     },
     {
-      "label": "linkedin",
+      "label": "LinkedIn",
       "url": "https://www.linkedin.com/in/dylan-nguyen-b765482a8/"
+    },
+    {
+      "label": "GitHub",
+      "url": "https://github.com/dylann4500"
+    },
+    {
+      "label": "X",
+      "url": "https://x.com/dylann4500"
     }
   ],
   "projects": [
@@ -505,6 +424,7 @@ export const defaultContent: SiteContent = {
       "details": ""
     }
   ],
+  "writingVisible": false,
   "eyebrow": "",
   "headline": "",
   "intro": "",
@@ -514,245 +434,4 @@ export const defaultContent: SiteContent = {
   "resumeSummary": "",
   "resumeUrl": "",
   "education": []
-};
-
-const cleanString = (value: unknown, fallback = "") =>
-  typeof value === "string" ? value.slice(0, 12000) : fallback;
-
-const cleanUrl = (value: unknown) => {
-  const url = cleanString(value).trim();
-  if (!url) return "";
-  if (url.startsWith("/api/media/")) return url;
-  try {
-    const parsed = new URL(url);
-    return ["http:", "https:"].includes(parsed.protocol) ? parsed.toString() : "";
-  } catch {
-    return "";
-  }
-};
-
-const monthNumbers: Record<string, number> = {
-  jan: 0,
-  feb: 1,
-  mar: 2,
-  apr: 3,
-  may: 4,
-  jun: 5,
-  jul: 6,
-  aug: 7,
-  sep: 8,
-  oct: 9,
-  nov: 10,
-  dec: 11,
-};
-
-function endDateValue(value: string) {
-  const normalized = value.trim().toLowerCase();
-  if (/\b(present|current|now)\b/.test(normalized)) {
-    return Number.POSITIVE_INFINITY;
-  }
-
-  const matches = [
-    ...normalized.matchAll(
-      /\b(?:(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\s+(?:(\d{1,2})(?:st|nd|rd|th)?(?:,\s*|\s+))?)?((?:19|20)\d{2})\b/g,
-    ),
-  ];
-  const match = matches.at(-1);
-  if (!match) return Number.NEGATIVE_INFINITY;
-
-  const monthKey = match[1] === "sept" ? "sep" : match[1];
-  const month = monthKey ? monthNumbers[monthKey] : 11;
-  const day = match[2] ? Number(match[2]) : monthKey ? 1 : 31;
-  return Date.UTC(Number(match[3]), month, day);
-}
-
-function compareDatesDescending(first: string, second: string) {
-  const firstValue = endDateValue(first);
-  const secondValue = endDateValue(second);
-  if (firstValue === secondValue) return 0;
-  return firstValue > secondValue ? -1 : 1;
-}
-
-export function sortExperienceEntries(entries: ResumeEntry[]) {
-  return [...entries].sort((first, second) =>
-    compareDatesDescending(first.period, second.period),
-  );
-}
-
-export function sortAwards(entries: Award[]) {
-  return [...entries].sort((first, second) =>
-    compareDatesDescending(first.year, second.year),
-  );
-}
-
-export function sortProjects(entries: Project[]) {
-  return [...entries].sort((first, second) =>
-    compareDatesDescending(first.year, second.year),
-  );
-}
-
-export function sortPhotos(entries: Photo[]) {
-  return [...entries].sort((first, second) =>
-    compareDatesDescending(first.date, second.date),
-  );
-}
-
-export function sanitizeContent(value: unknown): SiteContent {
-  const candidate =
-    value && typeof value === "object"
-      ? (value as Partial<Omit<SiteContent, "designVersion">> & {
-          designVersion?: number;
-        })
-      : {};
-
-  if (
-    candidate.designVersion !== 2 &&
-    candidate.designVersion !== 3 &&
-    candidate.designVersion !== 4 &&
-    candidate.designVersion !== 5 &&
-    candidate.designVersion !== 6 &&
-    candidate.designVersion !== 7 &&
-    candidate.designVersion !== 8 &&
-    candidate.designVersion !== 9 &&
-    candidate.designVersion !== 10 &&
-    candidate.designVersion !== 11 &&
-    candidate.designVersion !== 12 &&
-    candidate.designVersion !== 13
-  ) {
-    return defaultContent;
-  }
-  const isVersionTwo = candidate.designVersion === 2;
-  const needsProfileUpdate = candidate.designVersion < 6;
-  const needsPortfolioContentUpdate = candidate.designVersion < 7;
-  const needsLinkSyntaxUpdate = candidate.designVersion < 8;
-  const needsMinimalistUpdate = candidate.designVersion < 13;
-
-  const socials = needsProfileUpdate
-    ? defaultContent.socials
-    : Array.isArray(candidate.socials)
-    ? candidate.socials.slice(0, 12).map((item) => ({
-        label: cleanString(item?.label),
-        url: cleanUrl(item?.url),
-      }))
-    : defaultContent.socials;
-
-  const migratedSocials = candidate.designVersion < 12 &&
-    !socials.some((item) => item.label.toLowerCase() === "x" || item.url === xProfile.url)
-    ? [...socials, xProfile]
-    : socials;
-
-  // The minimalist layout lists socials as text links, in the starter order
-  // and without Instagram; saved URLs for the remaining platforms carry over.
-  const textSocials = needsMinimalistUpdate
-    ? defaultContent.socials.map((link) => ({
-        ...link,
-        url:
-          migratedSocials.find(
-            (item) => item.label.toLowerCase() === link.label.toLowerCase(),
-          )?.url || link.url,
-      }))
-    : migratedSocials;
-
-  const projects = Array.isArray(candidate.projects)
-    ? candidate.projects.slice(0, 30).map((item) => ({
-        title: cleanString(item?.title),
-        year: cleanString(item?.year),
-        description: cleanString(item?.description),
-        demoUrl: cleanUrl(item?.demoUrl || item?.url),
-        sourceUrl: cleanUrl(item?.sourceUrl),
-        url: cleanUrl(item?.url),
-      }))
-    : [];
-
-  const photos = Array.isArray(candidate.photos)
-    ? candidate.photos.slice(0, 60).map((item) => ({
-        title: cleanString(item?.title),
-        date: cleanString(item?.date),
-        description: cleanString(item?.description, cleanString(item?.caption)),
-        caption: cleanString(item?.caption),
-        url: cleanUrl(item?.url),
-        takenOnD610: item?.takenOnD610 === true,
-      }))
-    : [];
-
-  const videos = Array.isArray(candidate.videos)
-    ? candidate.videos.slice(0, 30).map((item) => ({
-        title: cleanString(item?.title),
-        year: cleanString(item?.year),
-        description: cleanString(item?.description),
-        url: cleanUrl(item?.url),
-      }))
-    : [];
-
-  const cleanEntries = (entries: unknown) =>
-    Array.isArray(entries)
-      ? entries.slice(0, 30).map((item) => ({
-          title: cleanString(item?.title),
-          organization: cleanString(item?.organization),
-          period: cleanString(item?.period),
-          description: cleanString(item?.description),
-        }))
-      : [];
-
-  const awards = Array.isArray(candidate.awards)
-    ? candidate.awards.slice(0, 30).map((item) => ({
-        title: cleanString(item?.title),
-        year: cleanString(item?.year),
-        description: cleanString(item?.description),
-        details: cleanString(item?.details),
-      }))
-    : [];
-
-  const facts = isVersionTwo || needsProfileUpdate || needsLinkSyntaxUpdate
-    ? defaultContent.facts
-    : Array.isArray(candidate.facts)
-    ? candidate.facts
-        .slice(0, 12)
-        .map((fact) => cleanString(fact))
-        .filter(Boolean)
-    : defaultContent.facts;
-
-  const defaultTab = tabIds.includes(candidate.defaultTab as TabId)
-    ? (candidate.defaultTab as TabId)
-    : defaultContent.defaultTab;
-
-  return {
-    designVersion: 13,
-    name: cleanString(candidate.name, defaultContent.name),
-    greeting: needsMinimalistUpdate
-      ? defaultContent.greeting
-      : cleanString(candidate.greeting, defaultContent.greeting),
-    bio: needsMinimalistUpdate
-      ? defaultContent.bio
-      : cleanString(candidate.bio, defaultContent.bio),
-    facts,
-    portraitUrl: cleanUrl(candidate.portraitUrl),
-    defaultTab,
-    email: needsProfileUpdate
-      ? defaultContent.email
-      : cleanString(candidate.email, defaultContent.email),
-    socials: textSocials,
-    projects: sortProjects(projects),
-    photos: sortPhotos(photos),
-    videos,
-    experience: sortExperienceEntries(
-      needsPortfolioContentUpdate
-        ? defaultContent.experience
-        : cleanEntries(candidate.experience),
-    ),
-    awards: sortAwards(
-      needsPortfolioContentUpdate ? defaultContent.awards : awards,
-    ),
-    writingVisible:
-      candidate.designVersion >= 11 && candidate.writingVisible === true,
-    eyebrow: cleanString(candidate.eyebrow),
-    headline: cleanString(candidate.headline),
-    intro: cleanString(candidate.intro),
-    location: cleanString(candidate.location),
-    availability: cleanString(candidate.availability),
-    about: cleanString(candidate.about),
-    resumeSummary: cleanString(candidate.resumeSummary),
-    resumeUrl: cleanUrl(candidate.resumeUrl),
-    education: cleanEntries(candidate.education),
-  };
 }

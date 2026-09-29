@@ -1,19 +1,19 @@
 import type { Metadata } from "next";
 import { SiteShell } from "@/components/SiteShell";
-import { VideosSection } from "@/components/SiteSections";
+import { CvSection } from "@/components/SiteSections";
 import { getPublishedContent } from "@/lib/content-server";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "videos",
+  title: "cv",
 };
 
-export default async function VideosPage() {
+export default async function CvPage() {
   const content = await getPublishedContent();
   return (
-    <SiteShell active="videos" heading="videos">
-      <VideosSection videos={content.videos} />
+    <SiteShell active="cv" heading="cv">
+      <CvSection experience={content.experience} awards={content.awards} />
     </SiteShell>
   );
 }

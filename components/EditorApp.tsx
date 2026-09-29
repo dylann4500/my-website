@@ -1,8 +1,15 @@
 "use client";
 
 import { useEffect, useState, type ChangeEvent } from "react";
-import { RichText } from "@/components/RichText";
-import { TabContent } from "@/components/PortfolioFrame";
+import { GalleryViewer } from "@/components/GalleryViewer";
+import { SiteShell, sitePages, type SitePageId } from "@/components/SiteShell";
+import {
+  CvSection,
+  MeSection,
+  ProjectsSection,
+  SocialLinks,
+  VideosSection,
+} from "@/components/SiteSections";
 import {
   defaultContent,
   sanitizeContent,
@@ -10,14 +17,12 @@ import {
   sortExperienceEntries,
   sortPhotos,
   sortProjects,
-  tabIds,
   type Award,
   type Photo,
   type Project,
   type ResumeEntry,
   type SiteContent,
   type SocialLink,
-  type TabId,
   type Video,
 } from "@/lib/content";
 
@@ -48,7 +53,6 @@ const newItems: Record<
     description: "",
     caption: "",
     url: "",
-    takenOnD610: false,
   },
   videos: { title: "New video", year: "", description: "", url: "" },
   experience: {
@@ -62,7 +66,7 @@ const newItems: Record<
 
 export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
   const [content, setContent] = useState(initialContent);
-  const [previewTab, setPreviewTab] = useState<TabId>(initialContent.defaultTab);
+  const [previewPage, setPreviewPage] = useState<SitePageId>("me");
   const [state, setState] = useState("All published changes are live");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState("");
@@ -74,7 +78,11 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
       const parsed = JSON.parse(draft) as Partial<Omit<SiteContent, "designVersion">> & {
         designVersion?: number;
       };
-      if (parsed.designVersion !== 11 && parsed.designVersion !== 12) {
+      if (
+        parsed.designVersion !== 11 &&
+        parsed.designVersion !== 12 &&
+        parsed.designVersion !== 13
+      ) {
         window.localStorage.removeItem("portfolio-editor-draft");
         return;
       }
@@ -92,16 +100,10 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
   }
 
   function updateText(
-    key: "name" | "greeting" | "bio" | "email",
+    key: "name" | "greeting" | "bio" | "portraitUrl" | "email",
     value: string,
   ) {
     setContent((current) => ({ ...current, [key]: value }));
-    markChanged();
-  }
-
-  function updateDefaultTab(value: TabId) {
-    setContent((current) => ({ ...current, defaultTab: value }));
-    setPreviewTab(value);
     markChanged();
   }
 
@@ -165,7 +167,7 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
     key: ArrayKey,
     index: number,
     field: string,
-    value: string | boolean,
+    value: string,
   ) {
     setContent((current) => ({
       ...current,
@@ -296,6 +298,23 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
     return completed.url;
   }
 
+  async function uploadPortrait(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setUploading("portrait");
+    setState("Uploading portrait…");
+    try {
+      const url = await uploadImage(file);
+      updateText("portraitUrl", url);
+      setState("Portrait uploaded — publish to make it live");
+    } catch (error) {
+      setState(error instanceof Error ? error.message : "Upload failed");
+    } finally {
+      setUploading("");
+      event.target.value = "";
+    }
+  }
+
   async function uploadPhoto(index: number, event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -330,7 +349,6 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
           description: "",
           caption: "",
           url,
-          takenOnD610: false,
         });
       }
       setContent((current) => ({
@@ -388,10 +406,10 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
       <div className="editor-workspace">
         <section className="editor-panel">
           <div className="editor-intro">
-            <h1>edit your index.</h1>
+            <h1>edit your site.</h1>
             <p>
-              The left side controls your introduction. Add material to the
-              sections whenever it is ready; empty sections stay deliberately quiet.
+              Sections below follow your site&apos;s navigation; work and awards
+              together make up the cv page. Empty pages stay deliberately quiet.
             </p>
             <p className="editor-guide">
               To link selected words, type{" "}
@@ -406,7 +424,7 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
               onChange={(value) => updateText("name", value)}
             />
             <TextField
-              label="small header"
+              label="greeting"
               value={content.greeting}
               onChange={(value) => updateText("greeting", value)}
             />
@@ -417,26 +435,33 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
               linkHint
             />
             <TextField
+              label="portrait image url"
+              value={content.portraitUrl}
+              onChange={(value) => updateText("portraitUrl", value)}
+            />
+            <div className="upload-row portrait-upload-row">
+              <span className="editor-notice">
+                small photo beside your intro; the original file is kept
+              </span>
+              <label className="file-label">
+                {uploading === "portrait"
+                  ? "uploading…"
+                  : content.portraitUrl
+                  ? "replace portrait"
+                  : "upload portrait"}
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  onChange={uploadPortrait}
+                  disabled={Boolean(uploading)}
+                />
+              </label>
+            </div>
+            <TextField
               label="email"
               value={content.email}
               onChange={(value) => updateText("email", value)}
             />
-            <SelectField
-              label="default section"
-              value={content.defaultTab}
-              onChange={updateDefaultTab}
-            />
-          </EditorSection>
-
-          <EditorSection title="writing">
-            <p className="section-note">
-              Share /writing with anyone you choose. Pieces marked ready in the
-              writing editor appear there; drafts stay private. The page has no
-              link in your site navigation and asks search engines not to index it.
-            </p>
-            <a className="tiny-button writing-editor-link" href="/edit/writing">
-              open writing editor →
-            </a>
           </EditorSection>
 
           <RepeatSection title="fun facts" onAdd={addFact}>
@@ -453,6 +478,10 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
           </RepeatSection>
 
           <RepeatSection title="social links" onAdd={() => addItem("socials")}>
+            <p className="section-note">
+              Shown as text links at the bottom of your home page, after your
+              email, in this order. The platform name is the link text.
+            </p>
             {content.socials.map((item, index) => (
               <RepeatCard
                 key={`social-${index}`}
@@ -485,6 +514,53 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
             removeItem={removeItem}
             onDatesBlur={() => sortDatedSection("experience")}
           />
+
+          <RepeatSection title="awards" onAdd={() => addItem("awards")}>
+            <p className="section-note">
+              Sorted by end date after you leave the date field. Use “Present”
+              for an ongoing entry.
+            </p>
+            {content.awards.map((item, index) => (
+              <RepeatCard
+                key={`award-${index}`}
+                onRemove={() => removeItem("awards", index)}
+              >
+                <div className="field-row">
+                  <TextField
+                    label="award"
+                    value={item.title}
+                    onChange={(value) =>
+                      updateItem("awards", index, "title", value)
+                    }
+                  />
+                  <TextField
+                    label="year"
+                    value={item.year}
+                    onChange={(value) =>
+                      updateItem("awards", index, "year", value)
+                    }
+                    onBlur={() => sortDatedSection("awards")}
+                  />
+                </div>
+                <TextArea
+                  label="description"
+                  value={item.description}
+                  onChange={(value) =>
+                    updateItem("awards", index, "description", value)
+                  }
+                  linkHint
+                />
+                <TextArea
+                  label="additional results (optional)"
+                  value={item.details}
+                  onChange={(value) =>
+                    updateItem("awards", index, "details", value)
+                  }
+                  linkHint
+                />
+              </RepeatCard>
+            ))}
+          </RepeatSection>
 
           <RepeatSection title="projects" onAdd={() => addItem("projects")}>
             <p className="section-note">
@@ -582,12 +658,23 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
             ))}
           </RepeatSection>
 
+          <EditorSection title="writing">
+            <p className="section-note">
+              Pieces marked ready in the writing editor are listed on /writing,
+              which is linked in your site navigation. Drafts stay private.
+            </p>
+            <a className="tiny-button writing-editor-link" href="/edit/writing">
+              open writing editor →
+            </a>
+          </EditorSection>
+
           <RepeatSection title="gallery" onAdd={() => addItem("photos")}>
             <div className="gallery-batch-row">
               <p className="section-note">
-                Upload several photos at once, then add a title, date, and
-                description to each. Photos sort newest first after you leave
-                the date field; use dates like “Jul 30 2026”.
+                Visitors see one random photo at a time, captioned with its
+                title, date, and description. Upload several at once, then fill
+                those in; photos sort newest first after you leave the date
+                field (use dates like “Jul 30 2026”).
               </p>
               <label className="file-label">
                 {uploading === "photo-batch"
@@ -632,21 +719,6 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
                   }
                   linkHint
                 />
-                <label className="editor-checkbox-field photo-camera-field">
-                  <input
-                    type="checkbox"
-                    checked={item.takenOnD610 === true}
-                    onChange={(event) =>
-                      updateItem(
-                        "photos",
-                        index,
-                        "takenOnD610",
-                        event.target.checked,
-                      )
-                    }
-                  />
-                  taken on Nikon D610 (adds † to the opened photo title)
-                </label>
                 <TextField
                   label="image url"
                   value={item.url}
@@ -666,53 +738,6 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
                     />
                   </label>
                 </div>
-              </RepeatCard>
-            ))}
-          </RepeatSection>
-
-          <RepeatSection title="awards" onAdd={() => addItem("awards")}>
-            <p className="section-note">
-              Sorted by end date after you leave the date field. Use “Present”
-              for an ongoing entry.
-            </p>
-            {content.awards.map((item, index) => (
-              <RepeatCard
-                key={`award-${index}`}
-                onRemove={() => removeItem("awards", index)}
-              >
-                <div className="field-row">
-                  <TextField
-                    label="award"
-                    value={item.title}
-                    onChange={(value) =>
-                      updateItem("awards", index, "title", value)
-                    }
-                  />
-                  <TextField
-                    label="year"
-                    value={item.year}
-                    onChange={(value) =>
-                      updateItem("awards", index, "year", value)
-                    }
-                    onBlur={() => sortDatedSection("awards")}
-                  />
-                </div>
-                <TextArea
-                  label="description"
-                  value={item.description}
-                  onChange={(value) =>
-                    updateItem("awards", index, "description", value)
-                  }
-                  linkHint
-                />
-                <TextArea
-                  label="additional results (optional)"
-                  value={item.details}
-                  onChange={(value) =>
-                    updateItem("awards", index, "details", value)
-                  }
-                  linkHint
-                />
               </RepeatCard>
             ))}
           </RepeatSection>
@@ -737,52 +762,18 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
               <span className="preview-dot" />
               live preview
             </span>
-            <span>{previewTab}</span>
+            <span>{sitePages.find((page) => page.id === previewPage)?.href}</span>
           </div>
           <div className="preview-canvas">
-            <div className="preview-index">
-              <section>
-                <h2>{content.greeting || "hi there!"}</h2>
-                <p><RichText text={content.bio} /></p>
-                <ul>
-                  {content.facts.map((fact, index) => (
-                    <li key={`preview-fact-${index}`}>
-                      - <RichText text={fact} />
-                    </li>
-                  ))}
-                </ul>
-                <div className="preview-socials">
-                  @ &nbsp; ◎ &nbsp;
-                  <span className="ui-symbol" aria-hidden="true">
-                    {"\u25B6\uFE0E"}
-                  </span>
-                  &nbsp; in &nbsp; git
-                </div>
-              </section>
-              <section className="preview-tabs">
-                <nav>
-                  {tabIds.map((tab) => (
-                    <button
-                      type="button"
-                      key={tab}
-                      aria-pressed={previewTab === tab}
-                      onClick={() => setPreviewTab(tab)}
-                    >
-                      <span className="ui-symbol" aria-hidden="true">
-                        {previewTab === tab ? "\u2192\uFE0E" : "·"}
-                      </span>{" "}
-                      {tab}
-                    </button>
-                  ))}
-                </nav>
-                <div className="preview-section-content">
-                  <TabContent
-                    tab={previewTab}
-                    content={sortedContent(content)}
-                  />
-                </div>
-              </section>
-            </div>
+            <SiteShell
+              active={previewPage}
+              onSelect={setPreviewPage}
+              footer={
+                previewPage === "me" ? <SocialLinks content={content} /> : null
+              }
+            >
+              <PreviewPage page={previewPage} content={sortedContent(content)} />
+            </SiteShell>
           </div>
         </aside>
       </div>
@@ -910,32 +901,23 @@ function TextArea({
   );
 }
 
-function SelectField({
-  label,
-  value,
-  onChange,
+function PreviewPage({
+  page,
+  content,
 }: {
-  label: string;
-  value: TabId;
-  onChange: (value: TabId) => void;
+  page: SitePageId;
+  content: SiteContent;
 }) {
-  return (
-    <div className="field">
-      <label>
-        {label}
-        <select
-          value={value}
-          onChange={(event) => onChange(event.target.value as TabId)}
-        >
-          {tabIds.map((tab) => (
-            <option key={tab} value={tab}>
-              {tab}
-            </option>
-          ))}
-        </select>
-      </label>
-    </div>
-  );
+  if (page === "cv") {
+    return <CvSection experience={content.experience} awards={content.awards} />;
+  }
+  if (page === "projects") return <ProjectsSection projects={content.projects} />;
+  if (page === "videos") return <VideosSection videos={content.videos} />;
+  if (page === "gallery") return <GalleryViewer photos={content.photos} />;
+  if (page === "writing") {
+    return <p>pieces marked ready in the writing editor are listed here.</p>;
+  }
+  return <MeSection content={content} />;
 }
 
 function ExperienceEditor({
@@ -957,7 +939,7 @@ function ExperienceEditor({
   onDatesBlur: () => void;
 }) {
   return (
-    <RepeatSection title="experience" onAdd={onAdd}>
+    <RepeatSection title="work" onAdd={onAdd}>
       <p className="section-note">
         Sorted by end date after you leave the date field. Use “Present” for an
         ongoing role.

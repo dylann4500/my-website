@@ -1,9 +1,14 @@
-import { PortfolioFrame } from "@/components/PortfolioFrame";
+import { SiteShell } from "@/components/SiteShell";
+import { MeSection, SocialLinks } from "@/components/SiteSections";
 import { getPublishedContent } from "@/lib/content-server";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const content = await getPublishedContent();
-  return <PortfolioFrame active="home" content={content} />;
+  return (
+    <SiteShell active="me" footer={<SocialLinks content={content} />}>
+      <MeSection content={content} />
+    </SiteShell>
+  );
 }

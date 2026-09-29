@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
   type ChangeEvent,
+  type KeyboardEvent,
 } from "react";
 import { WritingArticleView } from "@/components/WritingArticleView";
 import {
@@ -38,6 +39,36 @@ function toDateTimeLocal(value: string) {
   return new Date(date.valueOf() - offset).toISOString().slice(0, 16);
 }
 
+// Markers match lib/rich-text.ts; each uses its own character so styles nest.
+const textFormats = [
+  { name: "bold", label: "B", marker: "**", key: "b" },
+  { name: "italic", label: "I", marker: "_", key: "i" },
+  { name: "underline", label: "U", marker: "++", key: "u" },
+] as const;
+
+// Wraps each selected line in the marker, or unwraps it when every line
+// already is. Spaces stay outside the markers so the formatting applies.
+function toggleFormat(text: string, marker: string) {
+  const lines = text.split("\n").map((line) => {
+    const [, lead, body, trail] = line.match(/^(\s*)(.*?)(\s*)$/) ?? ["", "", line, ""];
+    return { lead, body, trail };
+  });
+  const filled = lines.filter((line) => line.body);
+  const unwrap = filled.length > 0 && filled.every(({ body }) =>
+    body.length > marker.length * 2 &&
+    body.startsWith(marker) &&
+    body.endsWith(marker));
+  return lines
+    .map(({ lead, body, trail }) => {
+      if (!body) return lead + trail;
+      const next = unwrap
+        ? body.slice(marker.length, -marker.length)
+        : `${marker}${body}${marker}`;
+      return `${lead}${next}${trail}`;
+    })
+    .join("\n");
+}
+
 export function WritingEditor() {
   const [articles, setArticles] = useState<WritingArticle[]>([]);
   const [selected, setSelected] = useState<WritingArticle | null>(null);
@@ -47,6 +78,7 @@ export function WritingEditor() {
   const [uploading, setUploading] = useState("");
   const selectedRef = useRef<WritingArticle | null>(null);
   const saveRef = useRef<(article: WritingArticle) => Promise<void>>(async () => {});
+  const activeText = useRef<{ blockId: string; field: HTMLTextAreaElement } | null>(null);
 
   useEffect(() => {
     selectedRef.current = selected;
@@ -161,6 +193,33 @@ export function WritingEditor() {
     }));
   }
 
+  function applyFormat(marker: string) {
+    const active = activeText.current;
+    if (!active?.field.isConnected) return;
+    const { blockId, field } = active;
+    const { selectionStart: from, selectionEnd: to, value } = field;
+    const selected = value.slice(from, to);
+    const replacement = selected ? toggleFormat(selected, marker) : marker + marker;
+    field.focus();
+    // insertText keeps the change in the textarea's own undo history.
+    if (!document.execCommand("insertText", false, replacement)) {
+      updateBlock(blockId, { text: value.slice(0, from) + replacement + value.slice(to) });
+    }
+    const caret = from + marker.length;
+    requestAnimationFrame(() => {
+      if (selected) field.setSelectionRange(from, from + replacement.length);
+      else field.setSelectionRange(caret, caret);
+    });
+  }
+
+  function formatShortcut(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (!(event.metaKey || event.ctrlKey) || event.altKey || event.shiftKey) return;
+    const format = textFormats.find((item) => item.key === event.key.toLowerCase());
+    if (!format) return;
+    event.preventDefault();
+    applyFormat(format.marker);
+  }
+
   async function uploadImage(blockId: string, event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -233,6 +292,24 @@ export function WritingEditor() {
           <span>{saveState}</span>
         </div>
         <div className="writing-editor-actions">
+          {mode === "edit" && (
+            <div className="writing-format-buttons" role="group" aria-label="Format selected text">
+              {textFormats.map((format) => (
+                <button
+                  type="button"
+                  className={`writing-format-${format.name}`}
+                  key={format.name}
+                  title={`${format.name} (⌘${format.label})`}
+                  aria-label={format.name}
+                  // Keeps focus, and the selection, in the text being edited.
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => applyFormat(format.marker)}
+                >
+                  {format.label}
+                </button>
+              ))}
+            </div>
+          )}
           <button type="button" aria-pressed={mode === "edit"} onClick={() => setMode("edit")}>edit</button>
           <button type="button" aria-pressed={mode === "preview"} onClick={() => setMode("preview")}>preview</button>
           <button className="writing-save-button" type="button" onClick={() => void save()} disabled={!selected}>save now</button>
@@ -246,7 +323,7 @@ export function WritingEditor() {
             <button type="button" onClick={createArticle}>+ new</button>
           </div>
           <p className="writing-privacy-note">
-            Only ready pieces appear at /writing. Anyone with the link can read them.
+            Only ready pieces appear on /writing, which is linked in your site navigation.
           </p>
           <nav aria-label="Writing drafts">
             {articles.map((article) => (
@@ -295,7 +372,7 @@ export function WritingEditor() {
                     checked={selected.published}
                     onChange={(event) => updateSelected((article) => ({ ...article, published: event.target.checked }))}
                   />
-                  show on unlisted writing page
+                  show on writing page
                 </label>
               </div>
 
@@ -339,6 +416,10 @@ export function WritingEditor() {
                         value={block.text}
                         rows={block.type === "paragraph" ? 3 : 1}
                         onChange={(event) => updateBlock(block.id, { text: event.target.value })}
+                        onFocus={(event) => {
+                          activeText.current = { blockId: block.id, field: event.currentTarget };
+                        }}
+                        onKeyDown={formatShortcut}
                         placeholder={block.type === "paragraph" ? "Start writing…" : block.type}
                         aria-label={block.type}
                       />
