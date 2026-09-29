@@ -144,7 +144,7 @@ export function CvSection({
   return (
     <>
       {experience.length > 0 && (
-        <section className="cv-section">
+        <section className="cv-section" id="work">
           <h2 className="section-heading">work</h2>
           <div className="entries">
             {experience.map((entry, index) => (
@@ -158,7 +158,7 @@ export function CvSection({
         </section>
       )}
       {awards.length > 0 && (
-        <section className="cv-section">
+        <section className="cv-section" id="awards">
           <h2 className="section-heading">awards</h2>
           <div className="entries">
             {awards.map((award, index) => (
