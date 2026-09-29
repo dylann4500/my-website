@@ -134,11 +134,13 @@ export function SocialLinks({ content }: { content: SiteContent }) {
 export function CvSection({
   experience,
   awards,
+  projects,
 }: {
   experience: ResumeEntry[];
   awards: Award[];
+  projects: Project[];
 }) {
-  if (!experience.length && !awards.length) return <EmptyState />;
+  if (!experience.length && !awards.length && !projects.length) return <EmptyState />;
   return (
     <>
       {experience.length > 0 && (
@@ -178,6 +180,12 @@ export function CvSection({
           </div>
         </section>
       )}
+      {projects.length > 0 && (
+        <section className="cv-section" id="projects">
+          <h2 className="section-heading">projects</h2>
+          <ProjectsSection projects={projects} />
+        </section>
+      )}
     </>
   );
 }
@@ -193,7 +201,7 @@ export function ProjectsSection({ projects }: { projects: Project[] }) {
         ].filter((link) => link.url);
         return (
           <article key={`${project.title}-${index}`}>
-            <EntryHeading title={project.title} date={project.year} />
+            <EntryHeading as="h3" title={project.title} date={project.year} />
             <EntryText text={project.description} />
             {links.length > 0 && (
               <p className="entry-links">

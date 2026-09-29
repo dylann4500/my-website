@@ -6,7 +6,6 @@ import { SiteShell, sitePages, type SitePageId } from "@/components/SiteShell";
 import {
   CvSection,
   MeSection,
-  ProjectsSection,
   SocialLinks,
   VideosSection,
 } from "@/components/SiteSections";
@@ -408,8 +407,8 @@ export function EditorApp({ initialContent }: { initialContent: SiteContent }) {
           <div className="editor-intro">
             <h1>edit your site.</h1>
             <p>
-              Sections below follow your site&apos;s navigation; work and awards
-              together make up the cv page. Empty pages stay deliberately quiet.
+              Sections below follow your site&apos;s navigation; work, awards, and
+              projects together make up the cv page. Empty pages stay deliberately quiet.
             </p>
             <p className="editor-guide">
               To link selected words, type{" "}
@@ -909,9 +908,14 @@ function PreviewPage({
   content: SiteContent;
 }) {
   if (page === "cv") {
-    return <CvSection experience={content.experience} awards={content.awards} />;
+    return (
+      <CvSection
+        experience={content.experience}
+        awards={content.awards}
+        projects={content.projects}
+      />
+    );
   }
-  if (page === "projects") return <ProjectsSection projects={content.projects} />;
   if (page === "videos") return <VideosSection videos={content.videos} />;
   if (page === "gallery") return <GalleryViewer photos={content.photos} />;
   if (page === "writing") {

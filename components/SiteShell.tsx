@@ -4,7 +4,6 @@ import { Fragment, type ReactNode } from "react";
 export const sitePages = [
   { id: "me", href: "/" },
   { id: "cv", href: "/cv" },
-  { id: "projects", href: "/projects" },
   { id: "videos", href: "/videos" },
   { id: "writing", href: "/writing" },
   { id: "gallery", href: "/gallery" },
@@ -66,7 +65,7 @@ export function SiteShell({
   const Content = onSelect ? "div" : "main";
 
   return (
-    <div className="site">
+    <div className={active === "cv" ? "site site-lowercase" : "site"}>
       {backHref ? (
         <p className="back-link">
           <Link href={backHref}>&lt;&lt; back</Link>
