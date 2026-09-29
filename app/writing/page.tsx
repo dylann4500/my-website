@@ -14,9 +14,6 @@ export default async function WritingPage() {
   const articles = await getPublishedWritingSummaries();
   return (
     <SiteShell active="writing" heading="writing">
-      <p className="writing-intro">
-        you found me! below are some of my unfiltered thoughts.
-      </p>
       <WritingList articles={articles} />
     </SiteShell>
   );
